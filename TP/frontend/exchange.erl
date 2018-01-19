@@ -14,7 +14,7 @@ init_exchange(Exchange, Address, Port) ->
 exchange(Sock) ->
   receive
     {request, User, Company, Quantity, UnitPrice, Type} ->
-      SendPacket = #'Request'{ord = #'Order'{user = User, company = Company, quantity = Quantity, unitPrice = UnitPrice, type = Type}},
+      SendPacket = #'Request'{order = #'Order'{user = User, company = Company, quantity = Quantity, unitPrice = UnitPrice, type = Type}},
       gen_tcp:send(Sock, exchangeSerializer:encode_msg(SendPacket)),
       exchange(Sock);
 
@@ -24,6 +24,13 @@ exchange(Sock) ->
             trades = RecvTrades} ->
           Trades = extractTrades(RecvTrades),
           replyManager ! {reply, User, Company, Quantity, UnitPrice, Type, Trades},
+          exchange(Sock);
+        #'Reply'{error = #'ErrorMsg'{user = User, error = Error}} ->
+          replyManager ! {error, User, Error},
+          exchange(Sock);
+        #'Reply'{trades = RecvTrades} ->
+          Trades = extractTrades(RecvTrades),
+          replyManager ! {trades, Trades},
           exchange(Sock)
       end
   end.

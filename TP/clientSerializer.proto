@@ -4,9 +4,9 @@ package client;
 
 message Request {
 	oneof msg {
-		AuthReq authReq = 1;
-		OrderReq ordReq = 2;
-		Logout logoutReq = 3;
+		AuthReq auth = 1;
+		OrderReq order = 2;
+		Logout logout = 3;
 		//...
 	}
 }
@@ -35,13 +35,12 @@ message AuthReq {
 
 message Reply {
 	oneof msg {
-		AuthRep authRep = 1;
+		AuthRep auth = 1;
 		InvalidRequest invReq = 2;
-		Logout logoutRep = 3;
-		Order
-		SellRep sellRep = 4;
-		BuyRep buyRep = 5;
-		TradesRep tradeRep = 6;
+		Logout logout = 3;
+		OrderRep order = 4;
+		TradesRep tradesRep = 5;
+		string error = 6;
 		//...
 	}
 }
@@ -51,30 +50,29 @@ message InvalidRequest {
 }
 
 message TradesRep {
-	repeated TradeRep trades = 1;
+	repeated Trade trades = 1;
 }
 
-message SellRep {
+message OrderRep {
 	required string company = 1;
 	required int32 quantity = 2;
-	required double minPrice = 3;
-	required TradesRep trades = 4;
+	required double unitPrice = 3;
+	required Type type = 4;
+	repeated Trade trades = 5;
+
+	enum Type {
+		SELL = 1;
+		BUY = 2;
+	}
 }
 
-message BuyRep {
-	required string company = 1;
-	required int32 quantity = 2;
-	required double maxPrice = 3;
-	required TradesRep trades = 4;
-}
-
-message TradeRep {
+message Trade {
 	required string seller = 1;
 	required string buyer = 2;
-	required int32 quantity = 3;
-	required double unitPrice = 4;
+	required string company = 3;
+	required int32 quantity = 4;
+	required double unitPrice = 5;
 }
-
 
 message AuthRep {
 	required Status status = 1;

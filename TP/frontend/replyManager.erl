@@ -9,16 +9,27 @@ main() ->
 % UserTrades é um map<username, [Trade]>
 replyManager(UserOrders, UserTrades) ->
   receive
-    {reply, User, _Company, _Quantity, _MinPrice, 'SELL', Trades} = SellReply ->
+    {reply, User, Company, Quantity, MinPrice, 'SELL', Trades} ->
+      SellReply = {sellReply, Company, Quantity, MinPrice, Trades},
       NewUserOrders = reply(User, SellReply, UserOrders),
       BuyerTrades = groupBuyers(Trades),
       NewUserTrades = sendTrades(maps:keys(BuyerTrades), BuyerTrades, UserTrades),
       replyManager(NewUserOrders, NewUserTrades);
-    {reply, User, _Company, _Quantity, _MaxPrice, 'SELL', Trades} = BuyReply ->
+    {reply, User, Company, Quantity, MaxPrice, 'BUY', Trades} ->
+      BuyReply = {sellReply, Company, Quantity, MaxPrice, Trades},
       NewUserOrders = reply(User, BuyReply, UserOrders),
       SellerTrades = groupSellers(Trades),
       NewUserTrades = sendTrades(maps:keys(SellerTrades), SellerTrades, UserTrades),
       replyManager(NewUserOrders, NewUserTrades);
+    {trades, Trades} ->
+      BuyerTrades = groupBuyers(Trades),
+      SellerTrades = groupSellers(Trades),
+      NewUserTrades1 = sendTrades(maps:keys(BuyerTrades), BuyerTrades, UserTrades),
+      NewUserTrades2 = sendTrades(maps:keys(SellerTrades), SellerTrades, NewUserTrades1),
+      replyManager(UserOrders, NewUserTrades2);
+    {error, User, Error} ->
+      Pids = getPids(User),
+      sendReply({error, Error}, Pids);
     {userLogin, User, Pid} ->
       NewUserOrders = sendUserOrders(User, Pid, UserOrders),
       NewUserTrades = sendUserTrades(User, Pid, UserTrades),
@@ -117,9 +128,13 @@ sendTrades([User | Users], MapTrades, UserTrades) ->
       NewUserTrades = addTrades(User, MapTrades, UserTrades),
       sendTrades(Users, MapTrades, NewUserTrades);
     Pids ->
-      sendReply(MapTrades, Pids),
+      Trades = getTrades(User, MapTrades),
+      sendReply({tradesRep, Trades}, Pids),
       sendTrades(Users, MapTrades, UserTrades)
   end.
+
+getTrades(User, MapTrades) ->
+  maps:get(User, MapTrades).
 
 % adiciona trades de users offline
 % retorna novo UserTrades

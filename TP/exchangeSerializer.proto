@@ -3,7 +3,7 @@ syntax = "proto2";
 package exchange;
 
 message Request {
-	required Order ord = 1;
+	required Order order = 1;
 }
 
 message Order {
@@ -22,7 +22,12 @@ message Order {
 message Reply {
 	optional Order order = 1;
 	repeated Trade trades = 2;
-	optional string error = 3;
+	optional ErrorMsg error = 3;
+}
+
+message ErrorMsg {
+	required string user = 1;
+	optional string error = 2;
 }
 
 message Trade {

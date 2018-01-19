@@ -4,8 +4,8 @@
 -include("clientSerializer.hrl").
 
 main(Port) ->
-  {ok, LSock} = gen_tcp:listen(Port, [binary, {packet, 1}]),
-  acceptor(LSock).
+  {ok, LSock} = gen_tcp:listen(Port, [binary, {packet, 4}]),
+  spawn(fun() -> acceptor(LSock) end).
 
 acceptor(LSock) ->
   {ok, Sock} = gen_tcp:accept(LSock),
@@ -17,18 +17,18 @@ loggedout(Sock) ->
   receive
     {tcp, Sock, RecvPacket} ->
       case clientSerializer:decode_msg(RecvPacket, 'Request') of
-        #'Request'{msg = {authReq, #'AuthReq'{username = Username, password = Password}}} ->
+        #'Request'{msg = {auth, #'AuthReq'{username = Username, password = Password}}} ->
           case authenticate(Username, Password) of
             login ->
-              SendPacket = #'Reply'{msg = {authRep, #'AuthRep'{status = 'LOGIN'}}},
+              SendPacket = #'Reply'{msg = {auth, #'AuthRep'{status = 'LOGIN'}}},
               gen_tcp:send(Sock, clientSerializer:encode_msg(SendPacket)),
               loggedin(Sock, Username);
             register ->
-              SendPacket = #'Reply'{msg = {authRep, #'AuthRep'{status = 'REGISTER'}}},
+              SendPacket = #'Reply'{msg = {auth, #'AuthRep'{status = 'REGISTER'}}},
               gen_tcp:send(Sock, clientSerializer:encode_msg(SendPacket)),
               loggedin(Sock, Username);
             wrong_pasword ->
-              SendPacket = #'Reply'{msg = {authRep, #'AuthRep'{status = 'WRONG_PASSWORD'}}},
+              SendPacket = #'Reply'{msg = {auth, #'AuthRep'{status = 'WRONG_PASSWORD'}}},
               gen_tcp:send(Sock, clientSerializer:encode_msg(SendPacket)),
               loggedout(Sock)
           end;
@@ -54,13 +54,13 @@ loggedin(Sock, User) ->
   receive
     {tcp, Sock, RecvPacket} ->
       case clientSerializer:decode_msg(RecvPacket, 'Request') of
-        #'Request'{msg = {ordReq, #'OrderReq'{exchange = Exchange, company = Company, quantity = Quantity, unitPrice = UnitPrice, type = Type}}} ->
+        #'Request'{msg = {order, #'OrderReq'{exchange = Exchange, company = Company, quantity = Quantity, unitPrice = UnitPrice, type = Type}}} ->
           Request = {request, User, Company, Quantity, UnitPrice, Type},
           exchangeManager ! {request, Exchange, Request},
           loggedin(Sock, User);
-        #'Request'{msg = {logoutReq, #'Logout'{}}} ->
+        #'Request'{msg = {logout, #'Logout'{}}} ->
           authenticator ! {logout, self(), User},
-          SendPacket = #'Reply'{msg = {logoutRep, #'Logout'{}}},
+          SendPacket = #'Reply'{msg = {logout, #'Logout'{}}},
           gen_tcp:send(Sock, clientSerializer:encode_msg(SendPacket)),
           loggedout(Sock);
         _ ->
@@ -73,21 +73,25 @@ loggedin(Sock, User) ->
     {tcp_error, Sock, _Reason} ->
       authenticator ! {logout, self(), User};
 
-    {sellRep, Company, Quantity, MinPrice, Trades} ->
+    {sellReply, Company, Quantity, MinPrice, Trades} ->
       TradesList = createTrades(Trades),
-      SendPacket = #'Reply'{msg = {sellRep, #'SellRep'{company = Company, quantity = Quantity, minPrice = MinPrice,
-        trades = #'TradesRep'{trades = TradesList}}}},
+      SendPacket = #'Reply'{msg = {order, #'OrderRep'{company = Company, quantity = Quantity, unitPrice = MinPrice, type = 'SELL',
+        trades = TradesList}}},
       gen_tcp:send(Sock, clientSerializer:encode_msg(SendPacket)),
       loggedin(Sock, User);
     {buyRep, Company, Quantity, MaxPrice, Trades} ->
       TradesList = createTrades(Trades),
-      SendPacket = #'Reply'{msg = {buyRep, #'BuyRep'{company = Company, quantity = Quantity, maxPrice = MaxPrice,
-        trades = #'TradesRep'{trades = TradesList}}}},
+      SendPacket = #'Reply'{msg = {order, #'OrderRep'{company = Company, quantity = Quantity, unitPrice = MaxPrice, type = 'BUY',
+        trades = TradesList}}},
       gen_tcp:send(Sock, clientSerializer:encode_msg(SendPacket)),
       loggedin(Sock, User);
     {tradesRep, Trades} ->
       TradesList = createTrades(Trades),
-      SendPacket = #'Reply'{msg = {tradeRep, #'TradesRep'{trades = TradesList}}},
+      SendPacket = #'Reply'{msg = {tradesRep, #'TradesRep'{trades = TradesList}}},
+      gen_tcp:send(Sock, clientSerializer:encode_msg(SendPacket)),
+      loggedin(Sock, User);
+    {error, Error} ->
+      SendPacket = #'Reply'{msg = {error, Error}},
       gen_tcp:send(Sock, clientSerializer:encode_msg(SendPacket)),
       loggedin(Sock, User)
   end.
@@ -97,6 +101,6 @@ createTrades(Trades) ->
   createTrades(Trades, []).
 createTrades([], Trades) ->
   Trades;
-createTrades([{Seller, Buyer, Quantity, UnitPrice} | Trades], TradesList) ->
-  Trade = #'TradeRep'{seller = Seller, buyer = Buyer, quantity = Quantity, unitPrice = UnitPrice},
+createTrades([{Seller, Buyer, Company, Quantity, UnitPrice} | Trades], TradesList) ->
+  Trade = #'Trade'{seller = Seller, buyer = Buyer, company = Company, quantity = Quantity, unitPrice = UnitPrice},
   createTrades(Trades, [Trade | TradesList]).

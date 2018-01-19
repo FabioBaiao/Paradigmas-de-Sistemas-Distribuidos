@@ -1,10 +1,14 @@
 package client;
 
+import com.google.protobuf.CodedInputStream;
+import com.google.protobuf.CodedOutputStream;
+
 import java.io.InputStream;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.net.Socket;
 import java.net.UnknownHostException;
+import java.util.List;
 
 import client.ClientSerializer.*;
 
@@ -26,10 +30,10 @@ public class Client {
 
   private static class Requester implements Runnable {
 
-    OutputStream out;
+    CodedOutputStream out;
 
     public Requester(OutputStream out) {
-      this.out = out;
+      this.out = CodedOutputStream.newInstance(out);
     }
 
     public void run() {
@@ -66,7 +70,7 @@ public class Client {
           .setPassword(password)
           .build();
 
-      Request req = Request.newBuilder().setAuthReq(authReq).build();
+      Request req = Request.newBuilder().setAuth(authReq).build();
 
       sendRequest(req);
     }
@@ -75,7 +79,7 @@ public class Client {
       String exchange = getExchange(company);
 
       OrderReq ordReq = createOrder(exchange, company, quantity, minPrice, OrderReq.Type.SELL);
-      Request req = Request.newBuilder().setOrdReq(ordReq).build();
+      Request req = Request.newBuilder().setOrder(ordReq).build();
       sendRequest(req);
     }
 
@@ -83,13 +87,13 @@ public class Client {
       String exchange = getExchange(company);
 
       OrderReq ordReq = createOrder(exchange, company, quantity, maxPrice, OrderReq.Type.BUY);
-      Request req = Request.newBuilder().setOrdReq(ordReq).build();
+      Request req = Request.newBuilder().setOrder(ordReq).build();
       sendRequest(req);
     }
 
     private void logout() {
       Logout logoutReq = Logout.newBuilder().build();
-      Request req = Request.newBuilder().setLogoutReq(logoutReq).build();
+      Request req = Request.newBuilder().setLogout(logoutReq).build();
       sendRequest(req);
     }
 
@@ -104,11 +108,10 @@ public class Client {
     }
 
     private void sendRequest(Request req) {
-      Integer size = req.getSerializedSize();
-
-      try{
-        out.write(size.byteValue());
-        req.writeTo(out);
+      byte[] packet = req.toByteArray();
+      try {
+        out.writeFixed32NoTag(Integer.reverseBytes(packet.length));
+  	    out.writeRawBytes(packet);
         out.flush();
       }
       catch (IOException e) {
@@ -125,29 +128,39 @@ public class Client {
 
   private static class Receiver implements Runnable {
 
-    InputStream in;
+    CodedInputStream in;
 
     public Receiver(InputStream in) {
-      this.in = in;
+      this.in = CodedInputStream.newInstance(in);
     }
 
     public void run() {
       while (true) {
         try{
-          int size = in.read();
-          byte[] packet = new byte[size];
-          in.read(packet, 0, size);
+          int len = Integer.reverseBytes(in.readFixed32());
+          byte[] packet = in.readRawBytes(len);
           Reply rep = Reply.parseFrom(packet);
 
           System.out.print("\r");
           switch (rep.getMsgCase()) {
-            case AUTHREP:
-              authentication(rep.getAuthRep());
+            case AUTH:
+              authentication(rep.getAuth());
               break;
             case INVREQ:
               invalidRequest(rep.getInvReq());
               break;
-
+            case LOGOUT:
+              logout(rep.getLogout());
+              break;
+            case ORDER:
+              order(rep.getOrder());
+              break;
+            case TRADESREP:
+              trades(rep.getTradesRep().getTradesList());
+              break;
+            case ERROR:
+              System.out.println(rep.getError());
+              break;
           }
           System.out.print("> ");
         }
@@ -173,6 +186,52 @@ public class Client {
 
     private void invalidRequest(InvalidRequest invReq) {
       System.out.println("Invalid request");
+    }
+
+    private void logout(Logout logout) {
+      System.out.println("Logged out");
+    }
+
+    private void order(OrderRep order) {
+      System.out.print("This ");
+      switch (order.getType()) {
+        case SELL:
+          System.out.print("sell");
+          break;
+        case BUY:
+          System.out.print("buy");
+          break;
+      }
+      System.out.println(" order was placed:");
+      System.out.print("Company: " + order.getCompany() + "; Quantity: " + order.getQuantity() + "; ");
+      switch (order.getType()) {
+        case SELL:
+          System.out.print("Minimum");
+          break;
+        case BUY:
+          System.out.print("Maximum");
+          break;
+      }
+      System.out.println(" Price: " + order.getUnitPrice() + "; ");
+      trades(order.getTradesList());
+    }
+
+    private void trades(List<Trade> trades) {
+      switch(trades.size()) {
+        case 0:
+          break;
+        case 1:
+          System.out.println("The following trade was negotiated: ");
+          break;
+        default:
+          System.out.println("The following trades were negotiated: ");
+          break;
+      }
+      for (Trade t : trades) {
+        System.out.println("Seller: " + t.getSeller() + "; Buyer: " + t.getBuyer() +
+          "; Company: " + t.getCompany() + "; Quantity: " + t.getQuantity() +
+          "; Unit Price: " + t.getUnitPrice());
+      }
     }
   }
 }
