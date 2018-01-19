@@ -25,7 +25,7 @@ exchange(Sock) ->
           Trades = extractTrades(RecvTrades),
           replyManager ! {reply, User, Company, Quantity, UnitPrice, Type, Trades},
           exchange(Sock);
-        #'Reply'{error = #'Error'{user = User, error = Error}} ->
+        #'Reply'{error = #'ErrorMsg'{user = User, error = Error}} ->
           replyManager ! {error, User, Error},
           exchange(Sock);
         #'Reply'{trades = RecvTrades} ->
