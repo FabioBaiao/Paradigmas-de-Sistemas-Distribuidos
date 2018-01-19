@@ -1,0 +1,87 @@
+syntax = "proto2";
+
+package client;
+
+message Request {
+	oneof msg {
+		AuthReq authReq = 1;
+		OrderReq ordReq = 2;
+		Logout logoutReq = 3;
+		//...
+	}
+}
+
+message Logout {
+	// alguma coisa ?
+}
+
+message OrderReq {
+	required string exchange = 1;
+	required string company = 2;
+	required int32 quantity = 3;
+	required double unitPrice = 4;
+	required Type type = 5;
+
+	enum Type {
+		SELL = 1;
+		BUY = 2;
+	}
+}
+
+message AuthReq {
+	required string username = 1;
+	required string password = 2;
+}
+
+message Reply {
+	oneof msg {
+		AuthRep authRep = 1;
+		InvalidRequest invReq = 2;
+		Logout logoutRep = 3;
+		Order
+		SellRep sellRep = 4;
+		BuyRep buyRep = 5;
+		TradesRep tradeRep = 6;
+		//...
+	}
+}
+
+message InvalidRequest {
+	// alguma coisa ?
+}
+
+message TradesRep {
+	repeated TradeRep trades = 1;
+}
+
+message SellRep {
+	required string company = 1;
+	required int32 quantity = 2;
+	required double minPrice = 3;
+	required TradesRep trades = 4;
+}
+
+message BuyRep {
+	required string company = 1;
+	required int32 quantity = 2;
+	required double maxPrice = 3;
+	required TradesRep trades = 4;
+}
+
+message TradeRep {
+	required string seller = 1;
+	required string buyer = 2;
+	required int32 quantity = 3;
+	required double unitPrice = 4;
+}
+
+
+message AuthRep {
+	required Status status = 1;
+
+	enum Status {
+		LOGIN = 1;
+		REGISTER = 2;
+		WRONG_PASSWORD = 3;
+	}
+}
