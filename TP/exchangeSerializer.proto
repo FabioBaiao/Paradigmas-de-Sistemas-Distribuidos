@@ -21,7 +21,7 @@ message Order {
 
 message Reply {
 	optional Order order = 1;
-	repeated Trade trades = 2;
+	repeated TradeMsg trades = 2;
 	optional ErrorMsg error = 3;
 }
 
@@ -30,7 +30,7 @@ message ErrorMsg {
 	optional string error = 2;
 }
 
-message Trade {
+message TradeMsg {
 	required string seller = 1;
 	required string buyer = 2;
 	required string company = 3;
