@@ -4,5 +4,12 @@
 # Log file
 *.log
 
+# Erlang beam files
+*.beam
+
+# Automatically generated files
+ClientSerializer.java
+ExchangeSerializer.java
+
 # MacOS
 .DS_Store
