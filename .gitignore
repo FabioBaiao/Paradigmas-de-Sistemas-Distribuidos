@@ -10,6 +10,8 @@
 # Automatically generated files
 ClientSerializer.java
 ExchangeSerializer.java
+clientSerializer.[eh]rl
+exchangeSerializer.[eh]rl
 
 # MacOS
 .DS_Store

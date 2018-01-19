@@ -51,7 +51,7 @@ import static exchange.Update.Type.*;
 
 public class ExchangeServer {
     // Ports
-    private static final int SRV_PORT = 5555; // ServerSocket port
+//  private static final int SRV_PORT = 5555; // ServerSocket port
     private static final int PUB_PORT = 5556; // ZMQ pub socket port
     // Opening and closing time
     private static final LocalTime openingTime = LocalTime.of(9,0); // 9:00
@@ -65,8 +65,8 @@ public class ExchangeServer {
 
     public static void main(String[] args) throws IOException {      
         // Usage for testing (also applys to the case where the exchange registers itself in directory)
-        if (args.length < 2) {
-            System.err.println("Usage: ExchangeServer exchange_name company1 [company2 ...]");
+        if (args.length < 3) {
+            System.err.println("Usage: ExchangeServer port exchange_name company1 [company2 ...]");
             System.exit(1);
         }
 /*
@@ -78,7 +78,7 @@ public class ExchangeServer {
 */
         Socket frontendConn = null;
         try (
-             ServerSocket serverSocket = new ServerSocket(SRV_PORT);
+             ServerSocket serverSocket = new ServerSocket(Integer.parseInt(args[0]));
              ZMQ.Context context = ZMQ.context(1);
              ZMQ.Socket pubSocket = context.socket(ZMQ.PUB)
              // open connection to directory???
@@ -89,6 +89,7 @@ public class ExchangeServer {
             scheduleOpenAndClose(exchange);
 
             pubSocket.bind("tcp://localhost:" + PUB_PORT);
+            logger.info("Pub socket is bound to " + PUB_PORT + ". Accepting connections from frontend");
             frontendConn = serverSocket.accept();
             CodedInputStream cis = CodedInputStream.newInstance(frontendConn.getInputStream());
             CodedOutputStream cos = CodedOutputStream.newInstance(frontendConn.getOutputStream());
@@ -109,10 +110,10 @@ public class ExchangeServer {
 
     // TODO: After testing, get exchange companies from directory instead of reading from args!
     private static Exchange createExchange(String[] args) {
-        String exchangeName = args[0];
+        String exchangeName = args[1]; // arg[0] is the server socket port
         Set<String> companies = new HashSet<>((int) (args.length / .75f));
 
-        for (int i = 1; i < args.length; i++)
+        for (int i = 2; i < args.length; i++)
             companies.add(args[i]);
 
         return new Exchange(exchangeName, companies, ExchangeServer::handleUpdate);
@@ -134,11 +135,15 @@ public class ExchangeServer {
 
         if (now.isAfter(fstScheduledOpen)) {
             fstScheduledOpen = fstScheduledOpen.plusDays(1);
+            logger.info("It's past today's opening time");
 
-            if (now.isBefore(fstScheduledClose)) // open now, as we are between opening and closing time!
+            if (now.isBefore(fstScheduledClose)) { // open now, as we are between opening and closing time!
+                logger.info("Still haven't reached closing time. Opening now!");
                 scheduler.execute(openExchangeTask);
-            else
+            } else {
+                logger.info("It's past today's closing time. Will open tomorrow");
                 fstScheduledClose = fstScheduledClose.plusDays(1);
+            }
         }
         // getSeconds() shall give enough precision for our use case.
         // If more precision is required, we can use toMillis()
@@ -147,6 +152,9 @@ public class ExchangeServer {
 
         scheduler.scheduleAtFixedRate(openExchangeTask, openDelay, 24 * 60 * 60, TimeUnit.SECONDS);
         scheduler.scheduleAtFixedRate(closeExchangeTask, closeDelay, 24 * 60 * 60, TimeUnit.SECONDS);
+
+        logger.info("Scheduled first open for " + fstScheduledOpen);
+        logger.info("Scheduled first close for " + fstScheduledClose);
     }
 
     private static Request readRequest(CodedInputStream cis) throws IOException {
