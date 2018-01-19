@@ -25,7 +25,7 @@ exchange(Sock) ->
           Trades = extractTrades(RecvTrades),
           replyManager ! {reply, User, Company, Quantity, UnitPrice, Type, Trades},
           exchange(Sock);
-        #'Reply'{error = #'ErrorMsg'{user = User, error = Error}} ->
+        #'Reply'{error = #'Error'{user = User, error = Error}} ->
           replyManager ! {error, User, Error},
           exchange(Sock);
         #'Reply'{trades = RecvTrades} ->
@@ -40,5 +40,5 @@ extractTrades(RecvTrades) ->
   extractTrades(RecvTrades, []).
 extractTrades([], L) ->
   L;
-extractTrades([#'Trade'{seller = Seller, buyer = Buyer, company = Company, quantity = Quantity, unitPrice = UnitPrice} | RecvTrades], L) ->
+extractTrades([#'TradeMsg'{seller = Seller, buyer = Buyer, company = Company, quantity = Quantity, unitPrice = UnitPrice} | RecvTrades], L) ->
   extractTrades(RecvTrades, [{Seller, Buyer, Company, Quantity, UnitPrice} | L]).
