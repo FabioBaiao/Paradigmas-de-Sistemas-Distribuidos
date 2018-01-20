@@ -75,7 +75,7 @@ public class Exchange {
     /** Returns the name of this exchange. */
     public String getName() { return name; }
 
-    // Should return immediately to avoid the processing of more company orders
+    // Should return immediately to avoid blocking the processing of more company orders
     public void setUpdateHandler(BiConsumer<String, Update> updateHandler) {
         this.updateHandler = updateHandler;
     }
@@ -90,7 +90,7 @@ public class Exchange {
      * still has more shares left to buy, the next compatible sell order with the minimum unit price possible is
      * looked up. If it exists, a new trade is executed, and so on. Trading stops when the buy order is completely
      * fulfilled or when there are no more compatible sell orders. In the second case, a buy order for the
-     * remaining number of shares not bought is registered. The return value of this method is a list of the executed trades.
+     * remaining number of shares not bought is registered. The return value of this method is a BuyOrderResults instance.
      *
      * @param buyer username of the client placing the buy order.
      * @param company name of the company whose shares are to be bought.
@@ -122,7 +122,7 @@ public class Exchange {
      * still has more shares left to sell, the next compatible buy order with the greatest possible unit price is
      * looked up. If it exists, a new trade is executed, and so on. Trading stops when the sell order is completely
      * fulfilled or when there are no more compatible buy orders. In the second case, a sell order for the
-     * remaining number of shares not sold is registered. The return value of this method is a list of the executed trades.
+     * remaining number of shares not sold is registered. The return value of this method is a SellOrderResults instance.
      *
      * @param seller username of the client placing the sell order.
      * @param company name of the company whose shares are to be sold.

@@ -168,13 +168,16 @@ public class ExchangeServer {
     private static void handleUpdate(String company, Update update) {
         switch (update.type) {
             case OPENING_UNIT_PRICE:
+                logger.info(company + " opening unit price is " + update.newValue + "€");
                 // send opening, min and max price to directory
                 // (the opening unit price is also the starting min and max price)
                 break;
             case MAX_UNIT_PRICE:
+                logger.info(company + " maximum unit price is now " + update.newValue + "€");
                 // send new max unit price to directory
                 break;
             case MIN_UNIT_PRICE:
+                logger.info(company + " minimum unit price is now " + update.newValue + "€");
                 // send new min unit price to directory
                 break;
             case CLOSING_UNIT_PRICE:
