@@ -54,9 +54,11 @@ sendUserOrders(User, Pid, UserOrders) ->
 sendUserTrades(User, Pid, UserTrades) ->
   case maps:find(User, UserTrades) of
     {ok, Trades} ->
-      Pid ! Trades,
+      Pid ! {tradesRep, Trades},
+      io:format("Offline Trades Sent~n", []),
       maps:remove(User, UserTrades);
     error ->
+      io:format("No Offline Trades~n", []),
       UserTrades
   end.
 

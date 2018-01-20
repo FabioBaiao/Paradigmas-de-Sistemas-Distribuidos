@@ -11,7 +11,11 @@ authenticator(Map) ->
       case maps:find(Username, Map) of
         {ok, {Password, Pids}} ->
           case sets:size(Pids) of
-             0 -> replyManager ! {userLogin, Username, From}
+            0 ->
+              replyManager ! {userLogin, Username, From},
+              io:format("First session~n", []);
+            _ ->
+              ok
           end,
           From ! {?MODULE, login},
           authenticator(maps:put(Username, {Password, sets:add_element(From, Pids)}, Map));
