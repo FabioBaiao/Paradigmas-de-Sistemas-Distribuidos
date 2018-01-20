@@ -72,7 +72,7 @@ public class ExchangeServer {
 /*
         // Usage for the exchange requesting its companies from the directory
         if (args.length != 2) {
-            System.err.println("Usage: ExchangeServer port exchange_name");
+            System.err.println("Usage: ExchangeServer frontend_port xsub_port exchange_name");
             System.exit(1);
         }
 */
