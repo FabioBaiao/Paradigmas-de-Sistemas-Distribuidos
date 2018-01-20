@@ -90,6 +90,7 @@ loggedin(Sock, User) ->
       TradesList = createTrades(Trades),
       SendPacket = #'Reply'{msg = {tradesRep, #'TradesRep'{trades = TradesList}}},
       gen_tcp:send(Sock, clientSerializer:encode_msg(SendPacket)),
+      io:format("Sent trades to client~n", []),
       loggedin(Sock, User);
     {error, Error} ->
       SendPacket = #'Reply'{msg = {error, Error}},

@@ -26,10 +26,12 @@ replyManager(UserOrders, UserTrades) ->
       SellerTrades = groupSellers(Trades),
       NewUserTrades1 = sendTrades(maps:keys(BuyerTrades), BuyerTrades, UserTrades),
       NewUserTrades2 = sendTrades(maps:keys(SellerTrades), SellerTrades, NewUserTrades1),
+      io:format("Sent Trades to user~n", []),
       replyManager(UserOrders, NewUserTrades2);
     {error, User, Error} ->
       Pids = getPids(User),
-      sendReply({error, Error}, Pids);
+      sendReply({error, Error}, Pids),
+      replyManager(UserOrders, UserTrades);
     {userLogin, User, Pid} ->
       NewUserOrders = sendUserOrders(User, Pid, UserOrders),
       NewUserTrades = sendUserTrades(User, Pid, UserTrades),
@@ -106,8 +108,9 @@ groupBuyers(Trades) ->
 groupBuyers([], BuyerTrades) ->
   BuyerTrades;
 groupBuyers([{_, Buyer, _, _, _} = Trade | Trades], BuyerTrades) ->
-  addMapList(Buyer, Trade, BuyerTrades),
-  groupBuyers(Trades, BuyerTrades).
+  io:format("grouping buyers: ~p~n", [Buyer]),
+  NewBuyerTrades = addMapList(Buyer, Trade, BuyerTrades),
+  groupBuyers(Trades, NewBuyerTrades).
 
 % agrupa trades por sellers
 groupSellers(Trades) ->
@@ -115,16 +118,19 @@ groupSellers(Trades) ->
 groupSellers([], SellerTrades) ->
   SellerTrades;
 groupSellers([{Seller, _, _, _, _} = Trade | Trades], SellerTrades) ->
-  addMapList(Seller, Trade, SellerTrades),
-  groupSellers(Trades, SellerTrades).
+  NewSellerTrades = addMapList(Seller, Trade, SellerTrades),
+  groupSellers(Trades, NewSellerTrades).
 
 % envia trades aos users
 % retorna novo UserTrades
 sendTrades([], _, UserTrades) ->
+  io:format("No more users~n"),
   UserTrades;
 sendTrades([User | Users], MapTrades, UserTrades) ->
+  io:format("Sending trades to ~p~n", [User]),
   case getPids(User) of
     [] ->
+      io:format("No pids~n", []),
       NewUserTrades = addTrades(User, MapTrades, UserTrades),
       sendTrades(Users, MapTrades, NewUserTrades);
     Pids ->

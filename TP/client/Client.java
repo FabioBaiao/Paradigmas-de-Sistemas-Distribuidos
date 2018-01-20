@@ -219,6 +219,7 @@ public class Client {
     private void trades(List<Trade> trades) {
       switch(trades.size()) {
         case 0:
+          System.out.println("NO TRADES!!");
           break;
         case 1:
           System.out.println("The following trade was negotiated: ");

@@ -25,6 +25,7 @@ exchange(Sock) ->
             trades = RecvTrades} ->
           Trades = extractTrades(RecvTrades),
           replyManager ! {reply, User, Company, Quantity, UnitPrice, Type, Trades},
+          io:format("Received Uncomplete Order~n", []),
           exchange(Sock);
         #'Reply'{error = #'ErrorMsg'{user = User, error = Error}} ->
           replyManager ! {error, User, Error},
@@ -32,6 +33,7 @@ exchange(Sock) ->
         #'Reply'{trades = RecvTrades} ->
           Trades = extractTrades(RecvTrades),
           replyManager ! {trades, Trades},
+          io:format("Received Complete Order~n", []),
           exchange(Sock)
       end
   end.
