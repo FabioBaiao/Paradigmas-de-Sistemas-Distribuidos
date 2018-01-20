@@ -86,7 +86,8 @@ public class ExchangeServer {
             final Exchange exchange = createExchange(args);
 
 //          registerExchange(exchange);
-            scheduleOpenAndClose(exchange);
+//          scheduleOpenAndClose(exchange); // uncomment to schedule opening and closing
+            exchange.open();
 
             pubSocket.bind("tcp://localhost:" + PUB_PORT);
             logger.info("Pub socket is bound to " + PUB_PORT + ". Accepting connections from frontend");
