@@ -65,8 +65,8 @@ public class ExchangeServer {
 
     public static void main(String[] args) throws IOException {      
         // Usage for testing (also applys to the case where the exchange registers itself in directory)
-        if (args.length < 3) {
-            System.err.println("Usage: ExchangeServer port exchange_name company1 [company2 ...]");
+        if (args.length < 4) {
+            System.err.println("Usage: ExchangeServer frontend_port xsub_port exchange_name company1 [company2 ...]");
             System.exit(1);
         }
 /*
@@ -76,6 +76,7 @@ public class ExchangeServer {
             System.exit(1);
         }
 */
+
         Socket frontendConn = null;
         try (
              ServerSocket serverSocket = new ServerSocket(Integer.parseInt(args[0]));
@@ -90,8 +91,8 @@ public class ExchangeServer {
 //          scheduleOpenAndClose(exchange); // uncomment to schedule opening and closing
             exchange.open();
 
-            pubSocket.bind("tcp://localhost:" + PUB_PORT);
-            logger.info("Pub socket is bound to " + PUB_PORT);
+            pubSocket.connect("tcp://localhost:" + Integer.parseInt(args[1]));
+            logger.info("Pub socket is bound to " + Integer.parseInt(args[1]));
             frontendConn = serverSocket.accept();
             CodedInputStream cis = CodedInputStream.newInstance(frontendConn.getInputStream());
             CodedOutputStream cos = CodedOutputStream.newInstance(frontendConn.getOutputStream());
@@ -112,10 +113,10 @@ public class ExchangeServer {
 
     // TODO: After testing, get exchange companies from directory instead of reading from args!
     private static Exchange createExchange(String[] args) {
-        String exchangeName = args[1]; // arg[0] is the server socket port
+        String exchangeName = args[2]; // arg[0..1] are ports
         Set<String> companies = new HashSet<>((int) (args.length / .75f));
 
-        for (int i = 2; i < args.length; i++)
+        for (int i = 3; i < args.length; i++)
             companies.add(args[i]);
 
         return new Exchange(exchangeName, companies, ExchangeServer::handleUpdate);
