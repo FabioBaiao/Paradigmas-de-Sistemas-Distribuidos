@@ -57,6 +57,7 @@ loggedin(Sock, User) ->
         #'Request'{msg = {order, #'OrderReq'{exchange = Exchange, company = Company, quantity = Quantity, unitPrice = UnitPrice, type = Type}}} ->
           Request = {request, User, Company, Quantity, UnitPrice, Type},
           exchangeManager ! {request, Exchange, Request},
+          io:format("New Order~n", []),
           loggedin(Sock, User);
         #'Request'{msg = {logout, #'Logout'{}}} ->
           authenticator ! {logout, self(), User},

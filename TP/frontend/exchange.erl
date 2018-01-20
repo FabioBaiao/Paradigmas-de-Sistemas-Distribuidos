@@ -7,7 +7,7 @@ main(Exchange, Address, Port) ->
   spawn(fun() -> init_exchange(Exchange, Address, Port) end).
 
 init_exchange(Exchange, Address, Port) ->
-  {ok, Sock} = gen_tcp:connect(Address, Port, [binary, {packet, 1}]),
+  {ok, Sock} = gen_tcp:connect(Address, Port, [binary, {packet, 4}]),
   exchangeManager ! {new_exchange, self(), Exchange},
   exchange(Sock).
 
@@ -16,6 +16,7 @@ exchange(Sock) ->
     {request, User, Company, Quantity, UnitPrice, Type} ->
       SendPacket = #'Request'{order = #'Order'{user = User, company = Company, quantity = Quantity, unitPrice = UnitPrice, type = Type}},
       gen_tcp:send(Sock, exchangeSerializer:encode_msg(SendPacket)),
+      io:format("New Request~n", []),
       exchange(Sock);
 
     {tcp, Sock, RecvPacket} ->
