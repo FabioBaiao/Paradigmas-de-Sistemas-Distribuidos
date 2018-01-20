@@ -131,7 +131,6 @@ public class Client {
           System.out.println("Company already subscribed");
           break;
       }
-      System.out.print("> ");
     }
 
     private void unsubscribe(String company) {
@@ -144,7 +143,6 @@ public class Client {
           System.out.println("Company subscription doesn't exists");
           break;
       }
-      System.out.print("> ");
     }
 
     private OrderReq createOrder(String exchange, String company, int quantity, double unitPrice, OrderReq.Type type) {
@@ -301,7 +299,9 @@ public class Client {
     public void run() {
       while (true) {
         byte[] b = socket.recv();
+        System.out.print("\r");
         System.out.println(new String(b));
+        System.out.print("> ");
       }
     }
 
