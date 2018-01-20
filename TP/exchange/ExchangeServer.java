@@ -83,6 +83,7 @@ public class ExchangeServer {
              ZMQ.Socket pubSocket = context.socket(ZMQ.PUB)
              // open connection to directory???
         ) {
+            logger.info("Server socket bound to " + Integer.parseInt(args[0]));
             final Exchange exchange = createExchange(args);
 
 //          registerExchange(exchange);
@@ -90,7 +91,7 @@ public class ExchangeServer {
             exchange.open();
 
             pubSocket.bind("tcp://localhost:" + PUB_PORT);
-            logger.info("Pub socket is bound to " + PUB_PORT + ". Accepting connections from frontend");
+            logger.info("Pub socket is bound to " + PUB_PORT);
             frontendConn = serverSocket.accept();
             CodedInputStream cis = CodedInputStream.newInstance(frontendConn.getInputStream());
             CodedOutputStream cos = CodedOutputStream.newInstance(frontendConn.getOutputStream());
@@ -349,9 +350,9 @@ public class ExchangeServer {
                 sb.append(t.company).append(':'); // all trades are from the same company
                 
                 sb.append(t.buyer).append(" bought ");
-                sb.append(t.quantity).append(" shares ");
-                sb.append(" from ").append(t.seller);
-                sb.append(" for ").append(String.format("%.2f€ each%n", t.unitPrice));
+                sb.append(t.quantity).append(" shares from ");
+                sb.append(t.seller).append(" for ");
+                sb.append(String.format("%.2f€ each%n", t.unitPrice));
             }
             return sb.toString();
         }
