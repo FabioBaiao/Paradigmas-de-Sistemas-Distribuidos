@@ -6,3 +6,4 @@ rm client/*.class
 rm client/ClientSerializer.java
 rm exchange/*.class
 rm exchange/ExchangeSerializer.java
+rm *.class

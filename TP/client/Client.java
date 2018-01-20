@@ -9,6 +9,10 @@ import java.io.OutputStream;
 import java.net.Socket;
 import java.net.UnknownHostException;
 import java.util.List;
+import java.util.Set;
+import java.util.HashSet;
+
+import org.zeromq.ZMQ;
 
 import client.ClientSerializer.*;
 
@@ -21,19 +25,27 @@ public class Client {
 
     Socket socket = new Socket(host, port);
 
-    Thread requester = new Thread(new Requester(socket.getOutputStream()));
+    String zmqHost = args[2];
+    int zmqPort = Integer.parseInt(args[3]);
+
+    Subscriber subscriber = new Subscriber(zmqHost, zmqPort);
+    Thread requester = new Thread(new Requester(socket.getOutputStream(), subscriber));
     Thread receiver = new Thread(new Receiver(socket.getInputStream()));
 
     requester.start();
     receiver.start();
+
+    subscriber.run();
   }
 
   private static class Requester implements Runnable {
 
     CodedOutputStream out;
+    Subscriber subscriber;
 
-    public Requester(OutputStream out) {
+    public Requester(OutputStream out, Subscriber subscriber) {
       this.out = CodedOutputStream.newInstance(out);
+      this.subscriber = subscriber;
     }
 
     public void run() {
@@ -59,6 +71,15 @@ public class Client {
           case "logout":
             // logout
             logout();
+            break;
+          case "sub":
+            //sub company
+            subscribe(options[1]);
+            break;
+          case "unsub":
+            // unsub company
+            unsubscribe(options[1]);
+            break;
         }
       }
     }
@@ -95,6 +116,35 @@ public class Client {
       Logout logoutReq = Logout.newBuilder().build();
       Request req = Request.newBuilder().setLogout(logoutReq).build();
       sendRequest(req);
+    }
+
+    private void subscribe(String company) {
+      System.out.print("\r");
+      switch (subscriber.subscribe(company)) {
+        case MAX_SUBS:
+          System.out.println("Can't subscribe more companies");
+          break;
+        case SUBSCRIBED:
+          System.out.println("Company subscribed");
+          break;
+        case EXISTS:
+          System.out.println("Company already subscribed");
+          break;
+      }
+      System.out.print("> ");
+    }
+
+    private void unsubscribe(String company) {
+      System.out.print("\r");
+      switch (subscriber.unsubscribe(company)) {
+        case UNSUBSCRIBED:
+          System.out.println("Company unsubscribed");
+          break;
+        case DOESNT_EXISTS:
+          System.out.println("Company subscription doesn't exists");
+          break;
+      }
+      System.out.print("> ");
     }
 
     private OrderReq createOrder(String exchange, String company, int quantity, double unitPrice, OrderReq.Type type) {
@@ -233,6 +283,57 @@ public class Client {
           "; Company: " + t.getCompany() + "; Quantity: " + t.getQuantity() +
           "; Unit Price: " + t.getUnitPrice());
       }
+    }
+  }
+
+  private static class Subscriber implements Runnable {
+
+    Set<String> subscribed;
+    ZMQ.Socket socket;
+
+    Subscriber(String host, int port) {
+      ZMQ.Context context = ZMQ.context(1);
+      socket = context.socket(ZMQ.SUB);
+      socket.connect("tcp://" + host + ":" + port);
+      this.subscribed = new HashSet<>();
+    }
+
+    public void run() {
+      while (true) {
+        byte[] b = socket.recv();
+        System.out.println(new String(b));
+      }
+    }
+
+    public SubResult subscribe(String company) {
+      if (subscribed.size() == 10) {
+        return SubResult.MAX_SUBS;
+      }
+      else if (subscribed.add(company)) {
+        socket.subscribe((company + ":").getBytes());
+        return SubResult.SUBSCRIBED;
+      }
+      else {
+        return SubResult.EXISTS;
+      }
+    }
+
+    public enum SubResult {
+      MAX_SUBS, SUBSCRIBED, EXISTS
+    }
+
+    public UnsubResult unsubscribe(String company) {
+      if (subscribed.remove(company)) {
+        socket.unsubscribe((company + ":").getBytes());
+        return UnsubResult.UNSUBSCRIBED;
+      }
+      else {
+        return UnsubResult.DOESNT_EXISTS;
+      }
+    }
+
+    public enum UnsubResult {
+      UNSUBSCRIBED, DOESNT_EXISTS
     }
   }
 }
