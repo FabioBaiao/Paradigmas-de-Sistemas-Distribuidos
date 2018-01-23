@@ -57,15 +57,15 @@ public class Client {
 
         switch(options[0]) {
           case "auth":
-            // auth username password
+            // auth {username} {password}
             authenticate(options[1], options[2]);
             break;
           case "sell":
-            // sell company quantity minPrice
+            // sell {company} {quantity} {minPrice}
             sell(options[1], Integer.parseInt(options[2]), Double.parseDouble(options[3]));
             break;
           case "buy":
-            // buy company quantity maxPrice
+            // buy {company} {quantity} {maxPrice}
             buy(options[1], Integer.parseInt(options[2]), Double.parseDouble(options[3]));
             break;
           case "logout":
@@ -73,12 +73,48 @@ public class Client {
             logout();
             break;
           case "sub":
-            //sub company
+            //sub {company}
             subscribe(options[1]);
             break;
           case "unsub":
-            // unsub company
+            // unsub {company}
             unsubscribe(options[1]);
+            break;
+          case "companies":
+            // companies
+            companies();
+            break;
+          case "company":
+            // company {company}
+            company(options[1]);
+            break;
+          case "exchange":
+            // exchange {company}
+            exchange(options[1]);
+            break;
+          case "current":
+            // current {company}
+            current(options[1]);
+            break;
+          case "previous":
+            // previous {company}
+            previous(options[1]);
+            break;
+          case "openprice":
+            // openprice (current|previous) {company}
+            openPrice(options[1], options[2]);
+            break;
+          case "closeprice":
+            // closeprice (current|previous) {company}
+            closePrice(options[1], options[2]);
+            break;
+          case "maximumprice":
+            // maximumprice (current|previous) {company}
+            maximumPrice(options[1], options[2]);
+            break;
+          case "minimumprice":
+            // minimumprice (current|previous) {company}
+            minimumPrice(options[1], options[2]);
             break;
         }
       }
@@ -141,6 +177,66 @@ public class Client {
           break;
         case DOESNT_EXISTS:
           System.out.println("Company subscription doesn't exists");
+          break;
+      }
+    }
+
+    private void companies() {
+      // TO DO
+    }
+
+    private void company(String company) {
+      // TO DO
+    }
+
+    private void exchange(String company) {
+      // TO DO
+    }
+
+    private void current(String company) {
+      // TO DO
+    }
+
+    private void previous(String company) {
+      // TO DO
+    }
+
+    private void openPrice(String day, String company) {
+      // TO DO
+      switch (day) {
+        case "current":
+          break;
+        case "previous":
+          break;
+      }
+    }
+
+    private void closePrice(String day, String company) {
+      // TO DO
+      switch (day) {
+        case "current":
+          break;
+        case "previous":
+          break;
+      }
+    }
+
+    private void minimumPrice(String day, String company) {
+      // TO DO
+      switch (day) {
+        case "current":
+          break;
+        case "previous":
+          break;
+      }
+    }
+
+    private void maximumPrice(String day, String company) {
+      // TO DO
+      switch (day) {
+        case "current":
+          break;
+        case "previous":
           break;
       }
     }
