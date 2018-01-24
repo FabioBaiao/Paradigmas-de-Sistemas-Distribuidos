@@ -3,11 +3,13 @@ package psd.directory;
 import io.dropwizard.Application;
 import io.dropwizard.setup.Bootstrap;
 import io.dropwizard.setup.Environment;
+import org.apache.commons.io.FilenameUtils;
 import psd.directory.core.Directory;
 import psd.directory.resources.CompaniesResource;
 import psd.directory.resources.CompanyResource;
 import psd.directory.resources.CurrentDayPricesResource;
 import psd.directory.resources.PreviousDayPricesResource;
+import psd.exchange.ConfigFileReader;
 
 import java.io.BufferedReader;
 import java.io.FileReader;
@@ -32,9 +34,7 @@ public class DirectoryApplication extends Application<DirectoryConfiguration> {
     public void run(final DirectoryConfiguration configuration,
                     final Environment environment) {
         List<String> exchangeConfigFiles = configuration.getExchangeConfigFiles();
-
         Map<String, String> companiesToExchange = populate(exchangeConfigFiles);
-
         Directory d = new Directory(companiesToExchange);
 
         environment.jersey().register(new CompaniesResource(d));
@@ -43,28 +43,17 @@ public class DirectoryApplication extends Application<DirectoryConfiguration> {
         environment.jersey().register(new PreviousDayPricesResource(d));
     }
 
-    private Map<String, String> populate(List<String> exchanges) {
-        Map<String, String> companiesToExchange = new HashMap<>();
-        for (String exchange : exchanges) {
-            List<String> companies = getCompanies(exchange + ".txt");
-            for (String company : companies) {
-                companiesToExchange.put(company, exchange);
-            }
-        }
-        return companiesToExchange;
-    }
+    private Map<String, String> populate(List<String> exchangeConfigFiles) {
+        Map<String, String> companyToExchange = new HashMap<>();
 
-    private List<String> getCompanies(String file) {
-        List<String> companies = new ArrayList<>();
-        try {
-            BufferedReader br = new BufferedReader(new FileReader(file));
-            String line = "";
-            while ((line = br.readLine()) != null) {
-                companies.add(line);
+        for (String f : exchangeConfigFiles) {
+            String exchange = FilenameUtils.getBaseName(f);
+            List<String> companies = ConfigFileReader.getCompanies(f);
+
+            for (String company : companies) {
+                companyToExchange.put(company, exchange);
             }
-        } catch (IOException e) {
-            e.printStackTrace();
         }
-        return companies;
+        return companyToExchange;
     }
 }
