@@ -1,9 +1,12 @@
 package directory.client;
 
+// Based on: https://github.com/bszeti/dropwizard-dwexample/blob/master/dwexample-client/src/main/java/bszeti/dw/example/client/ServiceClient.java
+
 import directory.api.Company;
 import directory.api.Data;
 
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 import javax.ws.rs.client.Client;
 import javax.ws.rs.client.ClientBuilder;
@@ -15,6 +18,23 @@ import javax.ws.rs.core.Response;
 
 import io.dropwizard.setup.Environment;
 import io.dropwizard.client.JerseyClientBuilder;
+
+import org.apache.http.impl.conn.PoolingHttpClientConnectionManager;
+import org.glassfish.jersey.apache.connector.ApacheClientProperties;
+import org.glassfish.jersey.apache.connector.ApacheConnectorProvider;
+import org.glassfish.jersey.client.ClientConfig;
+import org.glassfish.jersey.client.ClientProperties;
+import org.glassfish.jersey.client.RequestEntityProcessing;
+import org.glassfish.jersey.client.authentication.HttpAuthenticationFeature;
+import org.glassfish.jersey.client.filter.EncodingFilter;
+import org.glassfish.jersey.message.DeflateEncoder;
+import org.glassfish.jersey.message.GZipEncoder;
+
+import com.fasterxml.jackson.databind.DeserializationFeature;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.SerializationFeature;
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
+import com.fasterxml.jackson.jaxrs.json.JacksonJaxbJsonProvider;
 
 import directory.client.DirectoryClient;
 
@@ -30,6 +50,62 @@ public class DirectoryClient {
 
         client = builder.using(config.getJerseyClientConfiguration()).build(NAME);
         target = client.target(config.getUrl()).path(BASE_PATH);
+    }
+
+    public DirectoryClient(String url) {
+    	ClientConfig clientConfig = new ClientConfig();
+		
+		// Connection settings
+		PoolingHttpClientConnectionManager connectionManager = new PoolingHttpClientConnectionManager(1, TimeUnit.HOURS); // Keep idle connection in pool
+		connectionManager.setMaxTotal(1024); // Default is 20
+		connectionManager.setDefaultMaxPerRoute(1024); // Default is 2 only, not OK for production use
+		connectionManager.setValidateAfterInactivity(0); // Disable connection validation period (if it's closed on the server side). Might make sense with keepalive
+		clientConfig.property(ApacheClientProperties.CONNECTION_MANAGER, connectionManager);
+	
+		// Socket/connection timeout
+		// For additional details use connectionManager.setDefaultSocketConfig(SocketConfig.custom()...) 
+		// and clientConfig.property(ApacheClientProperties.REQUEST_CONFIG, RequestConfig.custom()...)
+		clientConfig.property(ClientProperties.CONNECT_TIMEOUT, 500);
+		clientConfig.property(ClientProperties.READ_TIMEOUT, 500);
+		
+		// Use Apache Http client 
+		ApacheConnectorProvider apacheConnectorProvider = new  ApacheConnectorProvider();
+		clientConfig.connectorProvider(apacheConnectorProvider);
+		
+		// TODO: How to configure keep alive and connection reuse strategy with Jersey?
+		// By default every connection is closed after the request which makes pooling not effective
+		// The "Connection: keep-alive" header is added, but the client closes the connection afterwards
+		
+		// TODO: ExecutorService for async calls must be reviewed for Jersey 2.26
+		// ThreadPoolExecutor with given core/max threadcount and an unbounded task queue 
+		clientConfig.property(ClientProperties.ASYNC_THREADPOOL_SIZE, 5);
+		
+		// To disabled chunked encoding and use "Content-Length: ..." instead of "Transfer-Encoding: chunked"
+		clientConfig.property(ClientProperties.REQUEST_ENTITY_PROCESSING, RequestEntityProcessing.BUFFERED);
+		
+		// To Accept-Encoding: gzip,deflate (added by default if EncodingFilter is not used)
+		clientConfig.register(GZipEncoder.class);
+		clientConfig.register(DeflateEncoder.class);
+		
+		// To force gzip request encoding for POST
+		clientConfig.register(EncodingFilter.class);
+		clientConfig.property(ClientProperties.USE_ENCODING, "gzip");
+		
+		// TODO: Add retry handled using ApacheClientProperties.RETRY_HANDLER with Jersey 2.26
+		
+		// Configure ObjectMapper
+		ObjectMapper objectMapper = new ObjectMapper()
+				.registerModule(new JavaTimeModule()) // Support java.time marshaling
+				.enable(SerializationFeature.WRAP_ROOT_VALUE) // To marshal with @JsonRootName
+				.enable(DeserializationFeature.UNWRAP_ROOT_VALUE) // To unmarshal with @JsonRootName
+				;
+		clientConfig.register(new JacksonJaxbJsonProvider(objectMapper,null));
+
+		// ClientBuilder uses org.glassfish.jersey.client.JerseyClientBuilder
+		client = ClientBuilder.newClient(clientConfig);
+
+		// Create webtarget
+		target = client.target(url).path(BASE_PATH);
     }
 
     // Utility method to check if a HTTP's response status is OK
