@@ -80,7 +80,7 @@ loggedin(Sock, User) ->
         trades = TradesList}}},
       gen_tcp:send(Sock, clientSerializer:encode_msg(SendPacket)),
       loggedin(Sock, User);
-    {buyRep, Company, Quantity, MaxPrice, Trades} ->
+    {buyReply, Company, Quantity, MaxPrice, Trades} ->
       TradesList = createTrades(Trades),
       SendPacket = #'Reply'{msg = {order, #'OrderRep'{company = Company, quantity = Quantity, unitPrice = MaxPrice, type = 'BUY',
         trades = TradesList}}},
