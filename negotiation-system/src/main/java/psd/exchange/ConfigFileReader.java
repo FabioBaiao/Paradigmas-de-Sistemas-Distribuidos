@@ -14,6 +14,7 @@ public class ConfigFileReader {
         try (BufferedReader br = new BufferedReader(new FileReader(fileName))) {
             String line = "";
             while ((line = br.readLine()) != null) {
+                line = line.toLowerCase().replaceAll(" +", "-");
                 companies.add(line);
             }
         } catch (IOException e) {
