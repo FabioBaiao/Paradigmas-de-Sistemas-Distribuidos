@@ -4,6 +4,6 @@ logging:
     psd: DEBUG
 
 exchangeConfigFiles:
-  - EURONEXT.txt
-  - NASDAQ.txt
-  - NYSE.txt
+  - EURONEXT
+  - NASDAQ
+  - NYSE
