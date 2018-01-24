@@ -1,5 +1,6 @@
 package psd.directory.resources;
 
+import psd.directory.api.Company;
 import psd.directory.api.Data;
 import psd.directory.core.Directory;
 
@@ -19,20 +20,22 @@ public class PreviousDayPricesResource {
     }
 
     @GET
-    public Data getPreviousData(@PathParam("company") String company){
-        if(directory.containsKey(company)){
-            Data d = directory.get(company).getPreviousDay();
-            if(d != null) return d;
+    public Data getPreviousData(@PathParam("company") String company) {
+        Company c = directory.get(company);
+        if (c != null) {
+            Data d = c.getPreviousDay();
+            if (d != null) return d;
         }
         throw new WebApplicationException(Response.Status.NOT_FOUND);
     }
 
     @PUT
     public Response setPreviousData(@PathParam("company") String company, Data data) {
-        if(directory.containsKey(company)){
-            directory.get(company).setPreviousDay(data);
+        Company c = directory.get(company);
+        if (c != null) {
+            c.setPreviousDay(data);
             return Response.ok().build();
-        }else{
+        } else {
             return Response.status(Response.Status.NOT_FOUND).build();
         }
     }
@@ -40,9 +43,10 @@ public class PreviousDayPricesResource {
     @GET
     @Path("/open")
     public double getCurrentDayOpenPrice(@PathParam("company") String company) {
-        if(directory.containsKey(company)){
-            Data d = directory.get(company).getPreviousDay();
-            if(d != null) return d.getOpeningPrice();
+        Company c = directory.get(company);
+        if (c != null) {
+            Data d = c.getPreviousDay();
+            if (d != null) return d.getOpeningPrice();
         }
         throw new WebApplicationException(Response.Status.NOT_FOUND);
     }
@@ -50,9 +54,10 @@ public class PreviousDayPricesResource {
     @GET
     @Path("/min")
     public double getCurrentDayMinPrice(@PathParam("company") String company) {
-        if(directory.containsKey(company)){
-            Data d = directory.get(company).getPreviousDay();
-            if(d != null) return d.getMinPrice();
+        Company c = directory.get(company);
+        if (c != null) {
+            Data d = c.getPreviousDay();
+            if (d != null) return d.getMinPrice();
         }
         throw new WebApplicationException(Response.Status.NOT_FOUND);
     }
@@ -60,9 +65,10 @@ public class PreviousDayPricesResource {
     @GET
     @Path("/max")
     public double getCurrentDayMaxPrice(@PathParam("company") String company) {
-        if(directory.containsKey(company)){
-            Data d = directory.get(company).getPreviousDay();
-            if(d != null) return d.getMaxPrice();
+        Company c = directory.get(company);
+        if (c != null) {
+            Data d = c.getPreviousDay();
+            if (d != null) return d.getMaxPrice();
         }
         throw new WebApplicationException(Response.Status.NOT_FOUND);
     }
@@ -70,9 +76,10 @@ public class PreviousDayPricesResource {
     @GET
     @Path("/close")
     public double getCurrentDayClosePrice(@PathParam("company") String company) {
-        if(directory.containsKey(company)){
-            Data d = directory.get(company).getPreviousDay();
-            if(d != null) return d.getClosingPrice();
+        Company c = directory.get(company);
+        if (c != null) {
+            Data d = c.getPreviousDay();
+            if (d != null) return d.getClosingPrice();
         }
         throw new WebApplicationException(Response.Status.NOT_FOUND);
     }

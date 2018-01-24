@@ -1,5 +1,6 @@
 package psd.directory.resources;
 
+import psd.directory.api.Company;
 import psd.directory.api.Data;
 import psd.directory.core.Directory;
 
@@ -19,20 +20,22 @@ public class CurrentDayPricesResource {
     }
 
     @GET
-    public Data getCurrentData(@PathParam("company") String company){
-        if(directory.containsKey(company)){
-            Data d = directory.get(company).getCurrentDay();
-            if(d != null) return d;
+    public Data getCurrentData(@PathParam("company") String company) {
+        Company c = directory.get(company);
+        if (c != null) {
+            Data d = c.getCurrentDay();
+            if (d != null) return d;
         }
         throw new WebApplicationException(Response.Status.NOT_FOUND);
     }
 
     @DELETE
     public Response deleteCurrentData(@PathParam("company") String company) {
-        if(directory.containsKey(company)){
-            directory.get(company).setCurrentDay(new Data());
+        Company c = directory.get(company);
+        if (c != null) {
+            c.setCurrentDay(new Data());
             return Response.ok().build();
-        }else{
+        } else {
             return Response.status(Response.Status.NOT_FOUND).build();
         }
     }
@@ -40,9 +43,10 @@ public class CurrentDayPricesResource {
     @GET
     @Path("/open")
     public double getCurrentDayOpenPrice(@PathParam("company") String company) {
-        if(directory.containsKey(company)){
-            Data d = directory.get(company).getCurrentDay();
-            if(d != null) return d.getOpeningPrice();
+        Company c = directory.get(company);
+        if (c != null) {
+            Data d = c.getCurrentDay();
+            if (d != null) return d.getOpeningPrice();
         }
         throw new WebApplicationException(Response.Status.NOT_FOUND);
     }
@@ -50,9 +54,10 @@ public class CurrentDayPricesResource {
     @GET
     @Path("/min")
     public double getCurrentDayMinPrice(@PathParam("company") String company) {
-        if(directory.containsKey(company)){
-            Data d = directory.get(company).getCurrentDay();
-            if(d != null) return d.getMinPrice();
+        Company c = directory.get(company);
+        if (c != null) {
+            Data d = c.getCurrentDay();
+            if (d != null) return d.getMinPrice();
         }
         throw new WebApplicationException(Response.Status.NOT_FOUND);
     }
@@ -60,9 +65,10 @@ public class CurrentDayPricesResource {
     @GET
     @Path("/max")
     public double getCurrentDayMaxPrice(@PathParam("company") String company) {
-        if(directory.containsKey(company)){
-            Data d = directory.get(company).getCurrentDay();
-            if(d != null) return d.getMaxPrice();
+        Company c = directory.get(company);
+        if (c != null) {
+            Data d = c.getCurrentDay();
+            if (d != null) return d.getMaxPrice();
         }
         throw new WebApplicationException(Response.Status.NOT_FOUND);
     }
@@ -70,9 +76,10 @@ public class CurrentDayPricesResource {
     @GET
     @Path("/close")
     public double getCurrentDayClosePrice(@PathParam("company") String company) {
-        if(directory.containsKey(company)){
-            Data d = directory.get(company).getCurrentDay();
-            if(d != null) return d.getClosingPrice();
+        Company c = directory.get(company);
+        if (c != null) {
+            Data d = c.getCurrentDay();
+            if (d != null) return d.getClosingPrice();
         }
         throw new WebApplicationException(Response.Status.NOT_FOUND);
     }
@@ -81,10 +88,11 @@ public class CurrentDayPricesResource {
     @PUT
     @Path("/open")
     public Response setCurrentDayOpenPrice(@PathParam("company") String company, double openingPrice) {
-        if(directory.containsKey(company)){
-            directory.get(company).getCurrentDay().setOpeningPrice(openingPrice);
+        Company c = directory.get(company);
+        if (c != null) {
+            c.getCurrentDay().setOpeningPrice(openingPrice);
             return Response.ok().build();
-        }else{
+        } else {
             return Response.status(Response.Status.NOT_FOUND).build();
         }
     }
@@ -92,10 +100,11 @@ public class CurrentDayPricesResource {
     @PUT
     @Path("/min")
     public Response setCurrentDayMinPrice(@PathParam("company") String company, double minPrice) {
-        if(directory.containsKey(company)){
-            directory.get(company).getCurrentDay().setMinPrice(minPrice);
+        Company c = directory.get(company);
+        if (c != null) {
+            c.getCurrentDay().setMinPrice(minPrice);
             return Response.ok().build();
-        }else{
+        } else {
             return Response.status(Response.Status.NOT_FOUND).build();
         }
     }
@@ -103,10 +112,11 @@ public class CurrentDayPricesResource {
     @PUT
     @Path("/max")
     public Response setCurrentDayMaxPrice(@PathParam("company") String company, double maxPrice) {
-        if(directory.containsKey(company)){
-            directory.get(company).getCurrentDay().setMaxPrice(maxPrice);
+        Company c = directory.get(company);
+        if (c != null) {
+            c.getCurrentDay().setMaxPrice(maxPrice);
             return Response.ok().build();
-        }else{
+        } else {
             return Response.status(Response.Status.NOT_FOUND).build();
         }
     }
@@ -114,10 +124,11 @@ public class CurrentDayPricesResource {
     @PUT
     @Path("/close")
     public Response setCurrentDayClosePrice(@PathParam("company") String company, double closePrice) {
-        if(directory.containsKey(company)){
-            directory.get(company).getCurrentDay().setClosingPrice(closePrice);
+        Company c = directory.get(company);
+        if (c != null) {
+            c.getCurrentDay().setClosingPrice(closePrice);
             return Response.ok().build();
-        }else{
+        } else {
             return Response.status(Response.Status.NOT_FOUND).build();
         }
     }

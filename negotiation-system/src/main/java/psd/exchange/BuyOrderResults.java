@@ -8,7 +8,7 @@ public class BuyOrderResults {
 
     /** 
      * Creates BuyOrderResults for a buy order that was completely fulfilled, 
-     * producing a list of trades and no remaining buy order (i.e.: remainingBuyOrder = null).
+     * producing a list of trades and no remaining buy order (i.e.: remainingBuyOrder = null)
      */
     public BuyOrderResults(List<Trade> trades) { this(trades, null); }
 

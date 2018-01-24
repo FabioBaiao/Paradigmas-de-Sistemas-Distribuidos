@@ -29,9 +29,9 @@ public class CompanyResource {
     @Path("/exchange")
     public String getExchange(@PathParam("company") String company) {
         Company c = directory.get(company);
-        if(c != null){
+        if (c != null) {
             String s = c.getExchange();
-            if(s != null) return s;
+            if (s != null) return s;
         }
         throw new WebApplicationException(Response.Status.NOT_FOUND);
     }

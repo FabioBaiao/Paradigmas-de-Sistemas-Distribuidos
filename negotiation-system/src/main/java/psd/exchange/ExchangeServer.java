@@ -51,8 +51,8 @@ public class ExchangeServer {
             logger.info("Server socket bound to " + Integer.parseInt(args[0]));
             final Exchange exchange = createExchange(args);
 
-//          scheduleTasks(exchange); // schedule open, close and day transition tasks
-            exchange.open();
+            scheduleTasks(exchange); // schedule open, close and day transition tasks
+//          exchange.open();
 
             pubSocket.connect("tcp://localhost:" + Integer.parseInt(args[1]));
             logger.info("Pub socket connected to " + Integer.parseInt(args[1]));
@@ -89,8 +89,13 @@ public class ExchangeServer {
         DayTransitionTask dayTransitionTask = new DayTransitionTask(exchange.getName());
         
         LocalDateTime now = LocalDateTime.now();
-        LocalDateTime fstScheduledOpen = now.with(openingTime);
-        LocalDateTime fstScheduledClose = now.with(closingTime);
+// Uncomment the next 2 lines for using the real opening and closing times
+//      LocalDateTime fstScheduledOpen = now.with(openingTime);
+//      LocalDateTime fstScheduledClose = now.with(closingTime);
+
+// NOTE: The following 2 lines are for testing purposes
+        LocalDateTime fstScheduledOpen = now.plusMinutes(1);
+        LocalDateTime fstScheduledClose = now.plusMinutes(6);
 
         if (now.isAfter(fstScheduledOpen)) {
             fstScheduledOpen = fstScheduledOpen.plusDays(1);
@@ -108,7 +113,11 @@ public class ExchangeServer {
         // If more precision is required, we can use toMillis()
         long openDelay = Duration.between(now, fstScheduledOpen).getSeconds();
         long closeDelay = Duration.between(now, fstScheduledClose).getSeconds();
-        long dayTransitionDelay = Duration.between(now, now.with(LocalTime.MAX)).getSeconds();
+
+// Uncomment the next line to move prices from current to previous day at midnight
+//      long dayTransitionDelay = Duration.between(now, now.with(LocalTime.MAX)).getSeconds();
+
+        long dayTransitionDelay = Duration.between(now, now.plusMinutes(11)).getSeconds();
 
         scheduler.scheduleAtFixedRate(openExchangeTask, openDelay, 24 * 60 * 60, TimeUnit.SECONDS);
         scheduler.scheduleAtFixedRate(closeExchangeTask, closeDelay, 24 * 60 * 60, TimeUnit.SECONDS);
