@@ -243,7 +243,7 @@ public class DirectoryClient {
     }
 
     public Double getPreviousDayOpenPrice(String company) {
-        Response response = target.path(company + "/current/open")
+        Response response = target.path(company + "/previous/open")
                 .request(MediaType.APPLICATION_JSON_TYPE)
                 .get();
 
@@ -251,7 +251,7 @@ public class DirectoryClient {
     }
 
     public Double getPreviousDayMinPrice(String company) {
-        Response response = target.path(company + "/current/min")
+        Response response = target.path(company + "/previous/min")
                 .request(MediaType.APPLICATION_JSON)
                 .get();
 
@@ -259,7 +259,7 @@ public class DirectoryClient {
     }
 
     public Double getPreviousDayMaxPrice(String company) {
-        Response response = target.path(company + "/current/max")
+        Response response = target.path(company + "/previous/max")
                 .request(MediaType.APPLICATION_JSON)
                 .get();
 
@@ -267,7 +267,7 @@ public class DirectoryClient {
     }
 
     public Double getPreviousDayClosePrice(String company) {
-        Response response = target.path(company + "/current/close")
+        Response response = target.path(company + "/previous/close")
                 .request(MediaType.APPLICATION_JSON)
                 .get();
 

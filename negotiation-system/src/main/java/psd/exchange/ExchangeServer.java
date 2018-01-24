@@ -95,7 +95,7 @@ public class ExchangeServer {
 
 // NOTE: The following 2 lines are for testing purposes
         LocalDateTime fstScheduledOpen = now.plusMinutes(1);
-        LocalDateTime fstScheduledClose = now.plusMinutes(6);
+        LocalDateTime fstScheduledClose = fstScheduledOpen.plusMinutes(5);
 
         if (now.isAfter(fstScheduledOpen)) {
             fstScheduledOpen = fstScheduledOpen.plusDays(1);
@@ -117,7 +117,7 @@ public class ExchangeServer {
 // Uncomment the next line to move prices from current to previous day at midnight
 //      long dayTransitionDelay = Duration.between(now, now.with(LocalTime.MAX)).getSeconds();
 
-        long dayTransitionDelay = Duration.between(now, now.plusMinutes(11)).getSeconds();
+        long dayTransitionDelay = Duration.between(now, fstScheduledClose.plusMinutes(5)).getSeconds();
 
         scheduler.scheduleAtFixedRate(openExchangeTask, openDelay, 24 * 60 * 60, TimeUnit.SECONDS);
         scheduler.scheduleAtFixedRate(closeExchangeTask, closeDelay, 24 * 60 * 60, TimeUnit.SECONDS);
