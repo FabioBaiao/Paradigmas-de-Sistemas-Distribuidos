@@ -21,7 +21,6 @@
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
         <dropwizard.version>1.2.2</dropwizard.version>
         <mainClass>psd.directory.DirectoryApplication</mainClass>
-        <jackson.version>2.9.0</jackson.version>
     </properties>
 
     <dependencyManagement>
