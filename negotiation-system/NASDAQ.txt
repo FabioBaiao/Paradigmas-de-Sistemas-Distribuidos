@@ -1,0 +1,16 @@
+adobe
+google
+amazon
+apple
+ebay
+electronic-arts
+facebook
+hasbro
+intel
+microsoft
+netflix
+nvidia
+paypal
+starbucks
+tesla
+vodafone
