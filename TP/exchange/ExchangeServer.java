@@ -181,8 +181,7 @@ public class ExchangeServer {
                 // send new min unit price to directory
                 break;
             case CLOSING_UNIT_PRICE:
-                // NOTE: since Exchange.close returns the closing stats of all companies,
-                //       it may be better to send them all in a single message.
+                // send closing price to directory
         }
     }
 
