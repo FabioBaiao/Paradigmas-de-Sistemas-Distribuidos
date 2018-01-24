@@ -253,4 +253,36 @@ public class DirectoryClient {
 
         return responseIsOk(response);
     }
+
+    public Double getPreviousDayOpenPrice(String company) {
+        Response response = target.path(company + "/current/open")
+                .request(MediaType.APPLICATION_JSON_TYPE)
+                .get();
+
+        return responseIsOk(response) ? response.readEntity(Double.class) : null;
+    }
+
+    public Double getPreviousDayMinPrice(String company) {
+        Response response = target.path(company + "/current/min")
+                .request(MediaType.APPLICATION_JSON)
+                .get();
+
+        return responseIsOk(response) ? response.readEntity(Double.class) : null;
+    }
+
+    public Double getPreviousDayMaxPrice(String company) {
+        Response response = target.path(company + "/current/max")
+                .request(MediaType.APPLICATION_JSON)
+                .get();
+
+        return responseIsOk(response) ? response.readEntity(Double.class) : null;
+    }
+
+    public Double getPreviousDayClosePrice(String company) {
+        Response response = target.path(company + "/current/close")
+                .request(MediaType.APPLICATION_JSON)
+                .get();
+
+        return responseIsOk(response) ? response.readEntity(Double.class) : null;
+    }
 }

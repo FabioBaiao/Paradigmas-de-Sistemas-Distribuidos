@@ -4,10 +4,11 @@ import com.google.protobuf.CodedInputStream;
 import com.google.protobuf.CodedOutputStream;
 import org.zeromq.ZMQ;
 import psd.client.ClientSerializer.*;
+import psd.directory.api.Company;
+import psd.directory.api.Data;
+import psd.directory.client.DirectoryClient;
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
+import java.io.*;
 import java.net.Socket;
 import java.net.UnknownHostException;
 import java.util.HashSet;
@@ -40,81 +41,90 @@ public class Client {
 
     CodedOutputStream out;
     Subscriber subscriber;
+    DirectoryClient client;
 
     public Requester(OutputStream out, Subscriber subscriber) {
       this.out = CodedOutputStream.newInstance(out);
       this.subscriber = subscriber;
+      this.client = new DirectoryClient("http://localhost:8080");
     }
 
     public void run() {
+      BufferedReader console = new BufferedReader(new InputStreamReader(System.in));
       while(true) {
-        System.out.print("> ");
+        try {
+          System.out.print("> ");
 
-        String input = System.console().readLine();
-        String[] options = input.split(" ");
+          String input = console.readLine();
+          String[] options = input.split(" ");
 
-        switch(options[0]) {
-          case "auth":
-            // auth {username} {password}
-            authenticate(options[1], options[2]);
-            break;
-          case "sell":
-            // sell {company} {quantity} {minPrice}
-            sell(options[1], Integer.parseInt(options[2]), Double.parseDouble(options[3]));
-            break;
-          case "buy":
-            // buy {company} {quantity} {maxPrice}
-            buy(options[1], Integer.parseInt(options[2]), Double.parseDouble(options[3]));
-            break;
-          case "logout":
-            // logout
-            logout();
-            break;
-          case "sub":
-            //sub {company}
-            subscribe(options[1]);
-            break;
-          case "unsub":
-            // unsub {company}
-            unsubscribe(options[1]);
-            break;
-          case "companies":
-            // companies
-            companies();
-            break;
-          case "company":
-            // company {company}
-            company(options[1]);
-            break;
-          case "exchange":
-            // exchange {company}
-            exchange(options[1]);
-            break;
-          case "current":
-            // current {company}
-            current(options[1]);
-            break;
-          case "previous":
-            // previous {company}
-            previous(options[1]);
-            break;
-          case "openprice":
-            // openprice (current|previous) {company}
-            openPrice(options[1], options[2]);
-            break;
-          case "closeprice":
-            // closeprice (current|previous) {company}
-            closePrice(options[1], options[2]);
-            break;
-          case "maximumprice":
-            // maximumprice (current|previous) {company}
-            maximumPrice(options[1], options[2]);
-            break;
-          case "minimumprice":
-            // minimumprice (current|previous) {company}
-            minimumPrice(options[1], options[2]);
-            break;
+          switch(options[0]) {
+            case "auth":
+              // auth {username} {password}
+              authenticate(options[1], options[2]);
+              break;
+            case "sell":
+              // sell {company} {quantity} {minPrice}
+              sell(options[1], Integer.parseInt(options[2]), Double.parseDouble(options[3]));
+              break;
+            case "buy":
+              // buy {company} {quantity} {maxPrice}
+              buy(options[1], Integer.parseInt(options[2]), Double.parseDouble(options[3]));
+              break;
+            case "logout":
+              // logout
+              logout();
+              break;
+            case "sub":
+              //sub {company}
+              subscribe(options[1]);
+              break;
+            case "unsub":
+              // unsub {company}
+              unsubscribe(options[1]);
+              break;
+            case "companies":
+              // companies
+              companies();
+              break;
+            case "company":
+              // company {company}
+              company(options[1]);
+              break;
+            case "exchange":
+              // exchange {company}
+              exchange(options[1]);
+              break;
+            case "current":
+              // current {company}
+              current(options[1]);
+              break;
+            case "previous":
+              // previous {company}
+              previous(options[1]);
+              break;
+            case "openprice":
+              // openprice (current|previous) {company}
+              openPrice(options[1], options[2]);
+              break;
+            case "closeprice":
+              // closeprice (current|previous) {company}
+              closePrice(options[1], options[2]);
+              break;
+            case "maximumprice":
+              // maximumprice (current|previous) {company}
+              maximumPrice(options[1], options[2]);
+              break;
+            case "minimumprice":
+              // minimumprice (current|previous) {company}
+              minimumPrice(options[1], options[2]);
+              break;
+          }
         }
+        catch (IOException e) {
+          e.printStackTrace();
+        }
+
       }
     }
 
@@ -131,7 +141,7 @@ public class Client {
     }
 
     private void sell(String company, int quantity, double minPrice) {
-      String exchange = getExchange(company);
+      String exchange = client.getExchange(company);
 
       OrderReq ordReq = createOrder(exchange, company, quantity, minPrice, OrderReq.Type.SELL);
       Request req = Request.newBuilder().setOrder(ordReq).build();
@@ -139,7 +149,7 @@ public class Client {
     }
 
     private void buy(String company, int quantity, double maxPrice) {
-      String exchange = getExchange(company);
+      String exchange = client.getExchange(company);
 
       OrderReq ordReq = createOrder(exchange, company, quantity, maxPrice, OrderReq.Type.BUY);
       Request req = Request.newBuilder().setOrder(ordReq).build();
@@ -153,7 +163,6 @@ public class Client {
     }
 
     private void subscribe(String company) {
-      System.out.print("\r");
       switch (subscriber.subscribe(company)) {
         case MAX_SUBS:
           System.out.println("Can't subscribe more companies");
@@ -168,7 +177,6 @@ public class Client {
     }
 
     private void unsubscribe(String company) {
-      System.out.print("\r");
       switch (subscriber.unsubscribe(company)) {
         case UNSUBSCRIBED:
           System.out.println("Company unsubscribed");
@@ -180,61 +188,137 @@ public class Client {
     }
 
     private void companies() {
-      // TO DO
+      List<String> companies = client.getCompanies();
+      if (companies == null) {
+        System.out.println("Error");
+        return;
+      }
+      for (String company : companies) {
+        System.out.println(company);
+      }
     }
 
-    private void company(String company) {
-      // TO DO
+    private void company(String companyName) {
+      Company company = client.getCompany(companyName);
+      if (company == null) {
+        System.out.println("Error");
+        return;
+      }
+      System.out.println(company.toString());
     }
 
     private void exchange(String company) {
-      // TO DO
+      String exchange = client.getExchange(company);
+      if (exchange == null) {
+        System.out.println("Error");
+        return;
+      }
+      System.out.println("The company " + company + " is negotiated in the exchange " + exchange);
     }
 
     private void current(String company) {
-      // TO DO
+      Data data = client.getCurrentDayPrices(company);
+      if (data == null) {
+        System.out.println("Error");
+        return;
+      }
+      System.out.println("Prices of current day in company " + company + ":");
+      System.out.println(data.toString());
     }
 
     private void previous(String company) {
-      // TO DO
-    }
+      Data data = client.getPreviousDayPrices(company);
+      if (data == null) {
+        System.out.println("Error");
+        return;
+      }
+      System.out.println("Prices of previous day in company " + company + ":");
+      System.out.println(data.toString());    }
 
     private void openPrice(String day, String company) {
-      // TO DO
+      Double price;
       switch (day) {
         case "current":
+          price = client.getCurrentDayOpenPrice(company);
+          if (price == null) {
+            System.out.println("Error");
+            return;
+          }
+          System.out.println("Opening price of current day in company " + company + ": " + price);
           break;
         case "previous":
+          price = client.getPreviousDayOpenPrice(company);
+          if (price == null) {
+            System.out.println("Error");
+            return;
+          }
+          System.out.println("Opening price of previous day in company " + company + ": " + price);
           break;
       }
     }
 
     private void closePrice(String day, String company) {
-      // TO DO
+      Double price;
       switch (day) {
         case "current":
+          price = client.getCurrentDayClosePrice(company);
+          if (price == null) {
+            System.out.println("Error");
+            return;
+          }
+          System.out.println("Closing price of current day in company " + company + ": " + price);
           break;
         case "previous":
+          price = client.getPreviousDayClosePrice(company);
+          if (price == null) {
+            System.out.println("Error");
+            return;
+          }
+          System.out.println("Closing price of previous day in company " + company + ": " + price);
           break;
       }
     }
 
     private void minimumPrice(String day, String company) {
-      // TO DO
+      Double price;
       switch (day) {
         case "current":
+          price = client.getCurrentDayMinPrice(company);
+          if (price == null) {
+            System.out.println("Error");
+            return;
+          }
+          System.out.println("Minimum price of current day in company " + company + ": " + price);
           break;
         case "previous":
+          price = client.getPreviousDayMinPrice(company);
+          if (price == null) {
+            System.out.println("Error");
+            return;
+          }
+          System.out.println("Minimum price of previous day in company " + company + ": " + price);
           break;
       }
     }
 
     private void maximumPrice(String day, String company) {
-      // TO DO
+      Double price;
       switch (day) {
         case "current":
+          price = client.getCurrentDayMaxPrice(company);
+          if (price == null) {
+            System.out.println("Error");
+            return;
+          }
+          System.out.println("Maximum price of current day in company " + company + ": " + price);
           break;
         case "previous":
+          price = client.getPreviousDayMaxPrice(company);
+          if (price == null) {
+            System.out.println("Error");
+            return;
+          }
+          System.out.println("Maximum price of previous day in company " + company + ": " + price);
           break;
       }
     }
@@ -259,11 +343,6 @@ public class Client {
       catch (IOException e) {
         e.printStackTrace();
       }
-    }
-
-    private String getExchange(String company) {
-      // TO DO
-      return "NASDAQ";
     }
 
   }
