@@ -15,3 +15,15 @@ exchangeSerializer.[eh]rl
 
 # MacOS
 .DS_Store
+
+# Intellij
+.idea/
+*.iml
+*.iws
+
+# Maven
+log/
+target/
+
+# Gradle
+.gradle
