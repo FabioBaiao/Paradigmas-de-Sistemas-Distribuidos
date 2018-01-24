@@ -9,6 +9,7 @@ import psd.directory.resources.CompanyResource;
 import psd.directory.resources.CurrentDayPricesResource;
 
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 public class DirectoryApplication extends Application<DirectoryConfiguration> {
@@ -28,7 +29,9 @@ public class DirectoryApplication extends Application<DirectoryConfiguration> {
     @Override
     public void run(final DirectoryConfiguration configuration,
                     final Environment environment) {
-        // TODO: Read config file instead of using hard-coded values
+        List<String> exchangeConfigFiles = configuration.getExchangeConfigFiles();
+
+        // TODO: Create directory from exchange config files
         Set<String> companyNames = new HashSet<>();
 
         companyNames.add("Facebook");

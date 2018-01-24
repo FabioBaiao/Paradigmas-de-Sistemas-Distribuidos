@@ -3,3 +3,7 @@ logging:
   loggers:
     psd: DEBUG
 
+exchangeConfigFiles:
+  - EURONEXT.txt
+  - NASDAQ.txt
+  - NYSE.txt
