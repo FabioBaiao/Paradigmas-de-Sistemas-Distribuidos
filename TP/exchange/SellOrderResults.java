@@ -5,8 +5,6 @@ import exchange.Trade;
 
 import java.util.List;
 
-// TODO: Consider replacing SellOrder with protobuff Order and Trade with protobuff Trade.
-//       This allows merging of SellOrderResults and BuyOrderResults into OrderResults and reduces allocations.
 public class SellOrderResults {
     public final List<Trade> trades;
     public final SellOrder remainingSellOrder;

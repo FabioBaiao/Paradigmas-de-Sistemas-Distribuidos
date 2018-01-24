@@ -45,8 +45,6 @@ import static exchange.Update.Type.*;
  * TODO:
  *   - send opening, minimum, maximum and closing price updates to directory through
  *     a singleThreadExecutor used solely for contacting the directory
- *   - Resolve name conflict between the protobuff Trade and Exchange Trade OR 
- *     remove Exchange trade and always use protobuff Trade
  */
 
 public class ExchangeServer {

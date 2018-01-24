@@ -30,11 +30,6 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 
-/**
- * TODO:
- *    - recheck synchronization strategy;
- *    - create tests and debug;
- */
 public class Exchange {
     private static final Logger logger = Logger.getLogger(Exchange.class.getName());
     
@@ -194,7 +189,6 @@ public class Exchange {
             this.sellOrders = new TreeSet<>();
         }
 
-        // TODO: Search for ways of reducing synchronization granularity
         synchronized BuyOrderResults buy(String buyer, int quantity, double maxUnitPrice)
             throws ExchangeClosedException
         {
@@ -230,7 +224,6 @@ public class Exchange {
             }
         }
 
-        // TODO: Look for ways of reducing synchronization granularity
         synchronized SellOrderResults sell(String seller, int quantity, double minUnitPrice)
             throws ExchangeClosedException
         {
