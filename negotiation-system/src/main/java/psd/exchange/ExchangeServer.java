@@ -2,7 +2,9 @@ package psd.exchange;
 
 import com.google.protobuf.CodedInputStream;
 import com.google.protobuf.CodedOutputStream;
+import org.apache.commons.io.FilenameUtils;
 import org.zeromq.ZMQ;
+import psd.directory.api.Data;
 import psd.directory.client.DirectoryClient;
 import psd.exchange.ExchangeSerializer.*;
 
@@ -14,8 +16,6 @@ import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
-import java.util.Set;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
@@ -23,16 +23,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-/**
- * TODO:
- *   - send opening, minimum, maximum and closing price updates to directory through
- *     a singleThreadExecutor used solely for contacting the directory
- */
-
 public class ExchangeServer {
-    // Ports
-//  private static final int SRV_PORT = 5555; // ServerSocket port
-    private static final int PUB_PORT = 5556; // ZMQ pub socket port
     // Opening and closing time
     private static final LocalTime openingTime = LocalTime.of(9,0); // 9:00
     private static final LocalTime closingTime = LocalTime.of(17,0); // 17:00
@@ -41,41 +32,30 @@ public class ExchangeServer {
     private static final ExecutorService singleThreadExec = Executors.newSingleThreadExecutor();
     private static final ScheduledExecutorService scheduler = Executors.newSingleThreadScheduledExecutor();
 
-    // TODO: Replace hard-coded url
     private static final  DirectoryClient directoryClient = new DirectoryClient("http://localhost:8080");
 
     private static final Logger logger = Logger.getLogger(ExchangeServer.class.getName());
 
-    public static void main(String[] args) throws IOException {      
-        // Usage for testing (also applys to the case where the exchange registers itself in directory)
-        if (args.length < 4) {
-            System.err.println("Usage: ExchangeServer frontend_port xsub_port exchange_name company1 [company2 ...]");
-            System.exit(1);
-        }
-/*
-        // Usage for the exchange requesting its companies from the directory
+    public static void main(String[] args) throws IOException {
         if (args.length != 3) {
-            System.err.println("Usage: ExchangeServer frontend_port xsub_port exchange_name");
+            System.err.println("Usage: ExchangeServer listen_port xsub_port config_file");
             System.exit(1);
         }
-*/
 
         Socket frontendConn = null;
         try (
              ServerSocket serverSocket = new ServerSocket(Integer.parseInt(args[0]));
              ZMQ.Context context = ZMQ.context(1);
              ZMQ.Socket pubSocket = context.socket(ZMQ.PUB)
-             // open connection to directory???
         ) {
             logger.info("Server socket bound to " + Integer.parseInt(args[0]));
             final Exchange exchange = createExchange(args);
 
-//          registerExchange(exchange);
-//          scheduleOpenAndClose(exchange); // uncomment to schedule opening and closing
+//          scheduleTasks(exchange); // schedule open, close and day transition tasks
             exchange.open();
 
             pubSocket.connect("tcp://localhost:" + Integer.parseInt(args[1]));
-            logger.info("Pub socket is bound to " + Integer.parseInt(args[1]));
+            logger.info("Pub socket connected to " + Integer.parseInt(args[1]));
             frontendConn = serverSocket.accept();
             CodedInputStream cis = CodedInputStream.newInstance(frontendConn.getInputStream());
             CodedOutputStream cos = CodedOutputStream.newInstance(frontendConn.getOutputStream());
@@ -94,26 +74,19 @@ public class ExchangeServer {
         }
     }
 
-    // TODO: After testing, get exchange companies from directory instead of reading from args!
     private static Exchange createExchange(String[] args) {
-        String exchangeName = args[2]; // arg[0..1] are ports
-        Set<String> companies = new HashSet<>((int) (args.length / .75f));
+        String exchangeConfigFile = args[2];  // arg[0..1] are ports
+        String exchangeName = FilenameUtils.getBaseName(exchangeConfigFile);
+        List<String> companies = ConfigFileReader.getCompanies(exchangeConfigFile);
 
-        for (int i = 3; i < args.length; i++)
-            companies.add(args[i]);
-
-        return new Exchange(exchangeName, companies, ExchangeServer::handleUpdate);
+        return new Exchange(exchangeName, new HashSet<>(companies), ExchangeServer::handleUpdate);
     }
 
-/*
-    private static void registerExchange(Exchange exchange) {
-        logger.info("Registering exchange in directory");
-    }
-*/
-
-    private static void scheduleOpenAndClose(Exchange exchange) {
+    /* Schedule open, close and day transition tasks. */
+    private static void scheduleTasks(Exchange exchange) {
         OpenExchangeTask openExchangeTask = new OpenExchangeTask(exchange);
         CloseExchangeTask closeExchangeTask = new CloseExchangeTask(exchange);
+        DayTransitionTask dayTransitionTask = new DayTransitionTask(exchange.getName());
         
         LocalDateTime now = LocalDateTime.now();
         LocalDateTime fstScheduledOpen = now.with(openingTime);
@@ -135,12 +108,15 @@ public class ExchangeServer {
         // If more precision is required, we can use toMillis()
         long openDelay = Duration.between(now, fstScheduledOpen).getSeconds();
         long closeDelay = Duration.between(now, fstScheduledClose).getSeconds();
+        long dayTransitionDelay = Duration.between(now, now.with(LocalTime.MAX)).getSeconds();
 
         scheduler.scheduleAtFixedRate(openExchangeTask, openDelay, 24 * 60 * 60, TimeUnit.SECONDS);
         scheduler.scheduleAtFixedRate(closeExchangeTask, closeDelay, 24 * 60 * 60, TimeUnit.SECONDS);
+        scheduler.scheduleAtFixedRate(dayTransitionTask, dayTransitionDelay, 24 * 60 * 60, TimeUnit.SECONDS);
 
         logger.info("Scheduled first open for " + fstScheduledOpen);
         logger.info("Scheduled first close for " + fstScheduledClose);
+        logger.info("Scheduled first day transition to " + dayTransitionDelay);
     }
 
     private static Request readRequest(CodedInputStream cis) throws IOException {
@@ -150,23 +126,24 @@ public class ExchangeServer {
         return Request.parseFrom(ba);
     }
 
-    private static void handleUpdate(String company, Update update) {
+    private static void handleUpdate(Update update) {
         switch (update.type) {
             case OPENING_UNIT_PRICE:
-                logger.info(company + " opening unit price is " + update.newValue + "€");
-                // send opening, min and max price to directory
-                // (the opening unit price is also the starting min and max price)
+                logger.info(update.company + " opening unit price is " + update.newValue + "€");
+                directoryClient.setCurrentDayOpenPrice(update.company, update.newValue);
+                directoryClient.setCurrentDayMinPrice(update.company, update.newValue);
+                directoryClient.setCurrentDayMaxPrice(update.company, update.newValue);
                 break;
             case MAX_UNIT_PRICE:
-                logger.info(company + " maximum unit price is now " + update.newValue + "€");
-                // send new max unit price to directory
+                logger.info(update.company + " maximum unit price is now " + update.newValue + "€");
+                directoryClient.setCurrentDayMaxPrice(update.company, update.newValue);
                 break;
             case MIN_UNIT_PRICE:
-                logger.info(company + " minimum unit price is now " + update.newValue + "€");
-                // send new min unit price to directory
+                logger.info(update.company + " minimum unit price is now " + update.newValue + "€");
+                directoryClient.setCurrentDayMinPrice(update.company, update.newValue);
                 break;
             case CLOSING_UNIT_PRICE:
-                // send closing price to directory
+                directoryClient.setCurrentDayClosePrice(update.company, update.newValue);
         }
     }
 
@@ -331,7 +308,6 @@ public class ExchangeServer {
 
             for (Trade t : trades) {
                 sb.append(t.company).append(':'); // all trades are from the same company
-                
                 sb.append(t.buyer).append(" bought ");
                 sb.append(t.quantity).append(" shares from ");
                 sb.append(t.seller).append(" for ");
@@ -404,10 +380,7 @@ public class ExchangeServer {
         OpenExchangeTask(Exchange exchange) { this.exchange = exchange; }
 
         @Override
-        public void run() {
-            logger.info("Opening the exchange");
-            exchange.open();
-        }
+        public void run() { exchange.open(); }
     }
 
     private static class CloseExchangeTask implements Runnable {
@@ -418,12 +391,21 @@ public class ExchangeServer {
         CloseExchangeTask(Exchange exchange) { this.exchange = exchange; }
 
         @Override
+        public void run() { exchange.close(); }
+    }
+
+    private static class DayTransitionTask implements Runnable {
+        private static final Logger logger = Logger.getLogger(DayTransitionTask.class.getName());
+
+        private final String exchangeName;
+
+        DayTransitionTask(String exchangeName) { this.exchangeName = exchangeName; }
+
+        @Override
         public void run() {
-            logger.info("Closing the exchange");
-
-            Map<String, ClosingStats> closingStats = exchange.close();
-
-            logger.info("TODO: Send closing stats to directory server");
+            Data currentData = directoryClient.getCurrentDayPrices(exchangeName);
+            directoryClient.setPreviousDayPrices(exchangeName, currentData);
+            directoryClient.deleteCurrentDayPrices(exchangeName);
         }
     }
 }

@@ -3,7 +3,7 @@ package psd.exchange;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
-import java.util.function.BiConsumer;
+import java.util.function.Consumer;
 import java.util.logging.Logger;
 
 import static psd.exchange.Update.Type.*;
@@ -15,13 +15,13 @@ public class Exchange {
     private volatile boolean open;
     private final String name;
     private final ConcurrentMap<String, CompanyOrders> orderMap;
-    private BiConsumer<String, Update> updateHandler;
+    private Consumer<Update> updateHandler;
 
     public Exchange(String name, Set<String> companies) {
-        this(name, companies, (company,update) -> {});
+        this(name, companies, (update) -> {});
     }
 
-    public Exchange(String name, Set<String> companies, BiConsumer<String, Update> updateHandler) {
+    public Exchange(String name, Set<String> companies, Consumer<Update> updateHandler) {
         this.open = false;
         this.name = name;
         this.orderMap = new ConcurrentHashMap<>((int) (companies.size() / .75f) + 1); // avoid rehashing
@@ -50,7 +50,7 @@ public class Exchange {
     public String getName() { return name; }
 
     // Should return immediately to avoid blocking the processing of more company orders
-    public void setUpdateHandler(BiConsumer<String, Update> updateHandler) {
+    public void setUpdateHandler(Consumer<Update> updateHandler) {
         this.updateHandler = updateHandler;
     }
 
@@ -124,16 +124,14 @@ public class Exchange {
      * @return map of company name to its closing statistics.
      * @see ClosingStats
      */
-    public Map<String, ClosingStats> close() {
+    public void close() {
         open = false;
         logger.info("The exchange is now closed");
 
-        Map<String, ClosingStats> res = new HashMap<>((int) (orderMap.size() / .75f) + 1);
         for (CompanyOrders o : orderMap.values())
-            res.put(o.company, o.getClosingStats());
+            o.close();
         
-        logger.info("Returning closing stats");
-        return res;
+        logger.info("Called close on all CompanyOrders");
         // Pre-conditions for this method working correctly as it is:
         //   1. no new companies are added to the order map after exchange construction;
         //   2. methods that modify CompanyOrder's stats don't allow changes when the exchange 
@@ -237,16 +235,10 @@ public class Exchange {
                 return new SellOrderResults(trades);
             }
         }
-/*
-        synchronized MinMaxStats getMinMaxStats() {
-            return (currentUnitPrice == UNDEFINED) ? null : new MinMaxStats(minUnitPrice, maxUnitPrice);
-        }
-*/
-        synchronized ClosingStats getClosingStats() {
-            if (currentUnitPrice == UNDEFINED_PRICE)
-                return null;
-            else
-                return new ClosingStats(openingUnitPrice, currentUnitPrice, minUnitPrice, maxUnitPrice);
+
+        synchronized void close() {
+            if (currentUnitPrice != UNDEFINED_PRICE)
+                updateHandler.accept(new Update(Exchange.this.name, company, CLOSING_UNIT_PRICE, currentUnitPrice));
         }
 
         // Doesn't need synchronization because this is only called inside synchronized methods.
@@ -260,13 +252,13 @@ public class Exchange {
             if (currentUnitPrice == UNDEFINED_PRICE) { // first trade of the day
                 openingUnitPrice = unitPrice;
                 minUnitPrice = maxUnitPrice = unitPrice;
-                Exchange.this.updateHandler.accept(company, new Update(OPENING_UNIT_PRICE, unitPrice));
+                updateHandler.accept(new Update(Exchange.this.name, company, OPENING_UNIT_PRICE, unitPrice));
             } else if (unitPrice < minUnitPrice) {
                 minUnitPrice = unitPrice;
-                Exchange.this.updateHandler.accept(company, new Update(MIN_UNIT_PRICE, unitPrice));
+                updateHandler.accept(new Update(Exchange.this.name, company, MIN_UNIT_PRICE, unitPrice));
             } else if (unitPrice > maxUnitPrice) {
                 maxUnitPrice = unitPrice;
-                Exchange.this.updateHandler.accept(company, new Update(MAX_UNIT_PRICE, unitPrice));
+                updateHandler.accept(new Update(Exchange.this.name, company, MAX_UNIT_PRICE, unitPrice));
             }
             currentUnitPrice = unitPrice;
 

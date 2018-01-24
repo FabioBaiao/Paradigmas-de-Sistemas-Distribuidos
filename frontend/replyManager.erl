@@ -16,7 +16,7 @@ replyManager(UserOrders, UserTrades) ->
       NewUserTrades = sendTrades(maps:keys(BuyerTrades), BuyerTrades, UserTrades),
       replyManager(NewUserOrders, NewUserTrades);
     {reply, User, Company, Quantity, MaxPrice, 'BUY', Trades} ->
-      BuyReply = {sellReply, Company, Quantity, MaxPrice, Trades},
+      BuyReply = {buyReply, Company, Quantity, MaxPrice, Trades},
       NewUserOrders = reply(User, BuyReply, UserOrders),
       SellerTrades = groupSellers(Trades),
       NewUserTrades = sendTrades(maps:keys(SellerTrades), SellerTrades, UserTrades),

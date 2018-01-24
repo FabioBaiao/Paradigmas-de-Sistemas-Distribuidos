@@ -61,12 +61,10 @@ public class DirectoryClient {
 		ApacheConnectorProvider apacheConnectorProvider = new  ApacheConnectorProvider();
 		clientConfig.connectorProvider(apacheConnectorProvider);
 		
-		// TODO: How to configure keep alive and connection reuse strategy with Jersey?
 		// By default every connection is closed after the request which makes pooling not effective
 		// The "Connection: keep-alive" header is added, but the client closes the connection afterwards
 		
-		// TODO: ExecutorService for async calls must be reviewed for Jersey 2.26
-		// ThreadPoolExecutor with given core/max threadcount and an unbounded task queue 
+		// ThreadPoolExecutor with given core/max threadcount and an unbounded task queue
 		clientConfig.property(ClientProperties.ASYNC_THREADPOOL_SIZE, 5);
 		
 		// To disabled chunked encoding and use "Content-Length: ..." instead of "Transfer-Encoding: chunked"
