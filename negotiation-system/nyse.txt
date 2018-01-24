@@ -1,0 +1,11 @@
+alibaba
+at-t
+bank-of-america
+bp
+coca-cola
+ford
+hp
+nokia
+oracle
+pfizer
+twitter
