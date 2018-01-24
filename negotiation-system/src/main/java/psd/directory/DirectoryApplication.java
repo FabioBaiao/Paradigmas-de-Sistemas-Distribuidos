@@ -7,10 +7,12 @@ import psd.directory.core.Directory;
 import psd.directory.resources.CompaniesResource;
 import psd.directory.resources.CompanyResource;
 import psd.directory.resources.CurrentDayPricesResource;
+import psd.directory.resources.PreviousDayPricesResource;
 
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.io.BufferedReader;
+import java.io.FileReader;
+import java.io.IOException;
+import java.util.*;
 
 public class DirectoryApplication extends Application<DirectoryConfiguration> {
 
@@ -31,16 +33,38 @@ public class DirectoryApplication extends Application<DirectoryConfiguration> {
                     final Environment environment) {
         List<String> exchangeConfigFiles = configuration.getExchangeConfigFiles();
 
-        // TODO: Create directory from exchange config files
-        Set<String> companyNames = new HashSet<>();
+        Map<String, String> companiesToExchange = populate(exchangeConfigFiles);
 
-        companyNames.add("Facebook");
-        companyNames.add("Google");
-        Directory d = new Directory(companyNames);
-        CompaniesResource companiesResource = new CompaniesResource(d);
+        Directory d = new Directory(companiesToExchange);
 
-        environment.jersey().register(companiesResource);
+        environment.jersey().register(new CompaniesResource(d));
         environment.jersey().register(new CompanyResource(d));
         environment.jersey().register(new CurrentDayPricesResource(d));
+        environment.jersey().register(new PreviousDayPricesResource(d));
+    }
+
+    private Map<String, String> populate(List<String> exchanges) {
+        Map<String, String> companiesToExchange = new HashMap<>();
+        for (String exchange : exchanges) {
+            List<String> companies = getCompanies(exchange + ".txt");
+            for (String company : companies) {
+                companiesToExchange.put(company, exchange);
+            }
+        }
+        return companiesToExchange;
+    }
+
+    private List<String> getCompanies(String file) {
+        List<String> companies = new ArrayList<>();
+        try {
+            BufferedReader br = new BufferedReader(new FileReader(file));
+            String line = "";
+            while ((line = br.readLine()) != null) {
+                companies.add(line);
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        return companies;
     }
 }
