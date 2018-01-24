@@ -1,6 +1,6 @@
 package psd.directory.resources;
 
-import psd.directory.api.CompanyList;
+import psd.directory.api.Company;
 import psd.directory.core.Directory;
 
 import javax.ws.rs.Consumes;
@@ -8,7 +8,6 @@ import javax.ws.rs.GET;
 import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -17,7 +16,7 @@ import java.util.stream.Collectors;
 @Consumes(MediaType.APPLICATION_JSON)
 public class CompaniesResource {
 
-    Directory directory;
+    private Directory directory;
 
     public CompaniesResource(){
     }
@@ -30,7 +29,7 @@ public class CompaniesResource {
     public List<String> listCompanies() {
         return directory.values()
                         .stream()
-                        .map(c -> c.getName())
+                        .map(Company::getName)
                         .collect(Collectors.toList());
     }
 

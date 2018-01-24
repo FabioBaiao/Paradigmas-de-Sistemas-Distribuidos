@@ -3,24 +3,8 @@ package psd.directory.client;
 // Based on: https://github.com/bszeti/dropwizard-dwexample/blob/master/dwexample-client/src/main/java/bszeti/dw/example/client/ServiceClient.java
 
 import com.fasterxml.jackson.jaxrs.json.JacksonJsonProvider;
-import psd.directory.api.Company;
-import psd.directory.api.CompanyList;
-import psd.directory.api.Data;
-
-import java.util.List;
-import java.util.concurrent.TimeUnit;
-
-import javax.ws.rs.client.Client;
-import javax.ws.rs.client.ClientBuilder;
-import javax.ws.rs.client.Entity;
-import javax.ws.rs.client.WebTarget;
-import javax.ws.rs.core.GenericType;
-import javax.ws.rs.core.MediaType;
-import javax.ws.rs.core.Response;
-
-import io.dropwizard.setup.Environment;
 import io.dropwizard.client.JerseyClientBuilder;
-
+import io.dropwizard.setup.Environment;
 import org.apache.http.impl.conn.PoolingHttpClientConnectionManager;
 import org.glassfish.jersey.apache.connector.ApacheClientProperties;
 import org.glassfish.jersey.apache.connector.ApacheConnectorProvider;
@@ -30,12 +14,18 @@ import org.glassfish.jersey.client.RequestEntityProcessing;
 import org.glassfish.jersey.client.filter.EncodingFilter;
 import org.glassfish.jersey.message.DeflateEncoder;
 import org.glassfish.jersey.message.GZipEncoder;
+import psd.directory.api.Company;
+import psd.directory.api.Data;
 
-import com.fasterxml.jackson.databind.DeserializationFeature;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.SerializationFeature;
-import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
-import com.fasterxml.jackson.jaxrs.json.JacksonJaxbJsonProvider;
+import javax.ws.rs.client.Client;
+import javax.ws.rs.client.ClientBuilder;
+import javax.ws.rs.client.Entity;
+import javax.ws.rs.client.WebTarget;
+import javax.ws.rs.core.GenericType;
+import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.Response;
+import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 public class DirectoryClient {
     private static final String NAME = "DirectoryClient";

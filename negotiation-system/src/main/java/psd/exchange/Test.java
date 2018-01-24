@@ -1,8 +1,8 @@
 package psd.exchange;
 
+import psd.directory.api.Company;
 import psd.directory.api.Data;
 import psd.directory.client.DirectoryClient;
-import psd.directory.api.Company;
 
 import java.util.List;
 

@@ -1,12 +1,11 @@
 package psd.directory.client;
 
-import javax.validation.Valid;
-import javax.validation.constraints.NotNull;
-
 import com.fasterxml.jackson.annotation.JsonProperty;
-
 import io.dropwizard.Configuration;
 import io.dropwizard.client.JerseyClientConfiguration;
+
+import javax.validation.Valid;
+import javax.validation.constraints.NotNull;
 
 public class DirectoryClientConfiguration extends Configuration {
 	@Valid
@@ -29,5 +28,5 @@ public class DirectoryClientConfiguration extends Configuration {
 	public String getUrl() { return url; }
 
 	@JsonProperty("url")
-	public void setUrl() { this.url = url; }
+	public void setUrl(String url) { this.url = url; }
 }

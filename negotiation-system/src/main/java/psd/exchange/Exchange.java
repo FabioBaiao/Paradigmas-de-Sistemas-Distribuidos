@@ -1,23 +1,12 @@
 package psd.exchange;
 
-import psd.directory.client.DirectoryClient;
-
-import static psd.exchange.Update.Type.*;
-
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.TreeSet;
-
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
-
 import java.util.function.BiConsumer;
-
 import java.util.logging.Logger;
+
+import static psd.exchange.Update.Type.*;
 
 
 public class Exchange {
@@ -27,7 +16,6 @@ public class Exchange {
     private final String name;
     private final ConcurrentMap<String, CompanyOrders> orderMap;
     private BiConsumer<String, Update> updateHandler;
-    private DirectoryClient directoryClient;
 
     public Exchange(String name, Set<String> companies) {
         this(name, companies, (company,update) -> {});

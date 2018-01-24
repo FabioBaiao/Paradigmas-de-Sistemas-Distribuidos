@@ -2,36 +2,26 @@ package psd.exchange;
 
 import com.google.protobuf.CodedInputStream;
 import com.google.protobuf.CodedOutputStream;
-
 import org.zeromq.ZMQ;
+import psd.directory.client.DirectoryClient;
+import psd.exchange.ExchangeSerializer.*;
 
-import psd.exchange.ExchangeSerializer.ErrorMsg;
-import psd.exchange.ExchangeSerializer.Order;
-import psd.exchange.ExchangeSerializer.Reply;
-import psd.exchange.ExchangeSerializer.Request;
-import psd.exchange.ExchangeSerializer.TradeMsg;
-
+import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
-
+import java.time.Duration;
+import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-
-import java.util.concurrent.Executors;
 import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
-
 import java.util.logging.Level;
 import java.util.logging.Logger;
-
-import java.time.Duration;
-import java.time.LocalDateTime;
-import java.time.LocalTime;
-
-import java.io.IOException;
 
 /**
  * TODO:
@@ -50,6 +40,9 @@ public class ExchangeServer {
     private static final ExecutorService pool = Executors.newFixedThreadPool(8);
     private static final ExecutorService singleThreadExec = Executors.newSingleThreadExecutor();
     private static final ScheduledExecutorService scheduler = Executors.newSingleThreadScheduledExecutor();
+
+    // TODO: Replace hard-coded url
+    private static final  DirectoryClient directoryClient = new DirectoryClient("http://localhost:8080");
 
     private static final Logger logger = Logger.getLogger(ExchangeServer.class.getName());
 
@@ -195,7 +188,7 @@ public class ExchangeServer {
         private final Request request;
         private final Exchange exchange;
 
-        public RequestProcessingTask(Request request, Exchange exchange) {
+        RequestProcessingTask(Request request, Exchange exchange) {
             this.request = request;
             this.exchange = exchange;
         }
@@ -361,9 +354,9 @@ public class ExchangeServer {
 
         private final Reply rep;
 
-        public SendReplyTask(Reply rep) { this.rep = rep; }
+        SendReplyTask(Reply rep) { this.rep = rep; }
 
-        public static void setCodedOutputStream(CodedOutputStream cos) { SendReplyTask.cos = cos; }
+        static void setCodedOutputStream(CodedOutputStream cos) { SendReplyTask.cos = cos; }
 
         @Override
         public void run() {
@@ -392,9 +385,9 @@ public class ExchangeServer {
 
         private final String notification;
 
-        public PublishTask(String notification) { this.notification = notification; }
+        PublishTask(String notification) { this.notification = notification; }
 
-        public static void setPubSocket(ZMQ.Socket pubSocket) { PublishTask.pubSocket = pubSocket; }
+        static void setPubSocket(ZMQ.Socket pubSocket) { PublishTask.pubSocket = pubSocket; }
         
         @Override
         public void run() {
@@ -408,7 +401,7 @@ public class ExchangeServer {
 
         private final Exchange exchange;
 
-        public OpenExchangeTask(Exchange exchange) { this.exchange = exchange; }
+        OpenExchangeTask(Exchange exchange) { this.exchange = exchange; }
 
         @Override
         public void run() {
@@ -422,7 +415,7 @@ public class ExchangeServer {
 
         private final Exchange exchange;
 
-        public CloseExchangeTask(Exchange exchange) { this.exchange = exchange; }
+        CloseExchangeTask(Exchange exchange) { this.exchange = exchange; }
 
         @Override
         public void run() {

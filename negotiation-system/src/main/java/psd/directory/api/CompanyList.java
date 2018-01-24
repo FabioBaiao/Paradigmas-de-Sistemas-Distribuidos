@@ -3,7 +3,6 @@ package psd.directory.api;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 import java.util.List;
-import java.util.stream.Collectors;
 
 public class CompanyList {
     private List<String> companies;
