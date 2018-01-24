@@ -28,7 +28,8 @@ public class CompaniesResource {
 
     @GET
     public List<String> listCompanies() {
-        return directory.values().stream()
+        return directory.values()
+                        .stream()
                         .map(c -> c.getName())
                         .collect(Collectors.toList());
     }

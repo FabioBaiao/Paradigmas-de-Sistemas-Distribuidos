@@ -28,6 +28,7 @@ public class DirectoryApplication extends Application<DirectoryConfiguration> {
     @Override
     public void run(final DirectoryConfiguration configuration,
                     final Environment environment) {
+        // TODO: Read config file instead of using hard-coded values
         Set<String> companyNames = new HashSet<>();
 
         companyNames.add("Facebook");

@@ -16,9 +16,11 @@ public class Directory {
     }
 
     public Directory(Map<String, String> companyToExchange) {
-
+        companies = new HashMap<>((int) (companyToExchange.size() / .75f) + 1);
+        companyToExchange.forEach((c,e) -> companies.put(c, new Company(c,e)));
     }
 
+    // For testing
     public Directory(Set<String> companyNames) {
         companies = new HashMap<>((int) (companyNames.size() / .75f) + 1);
 
