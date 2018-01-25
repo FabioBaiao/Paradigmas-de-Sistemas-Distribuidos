@@ -1,0 +1,8 @@
+<component name="ProjectRunConfigurationManager">
+  <configuration default="false" name="BootClients" type="CompoundRunConfigurationType" factoryName="Compound Run Configuration">
+    <toRun type="Application" name="Client1" />
+    <toRun type="Application" name="Client2" />
+    <toRun type="Application" name="Client3" />
+    <method />
+  </configuration>
+</component>

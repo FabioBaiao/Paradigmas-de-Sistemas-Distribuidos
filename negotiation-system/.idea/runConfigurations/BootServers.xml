@@ -1,0 +1,10 @@
+<component name="ProjectRunConfigurationManager">
+  <configuration default="false" name="BootServers" type="CompoundRunConfigurationType" factoryName="Compound Run Configuration">
+    <toRun type="Application" name="Broker" />
+    <toRun type="Application" name="DirectoryApplication" />
+    <toRun type="Application" name="EuronextServer" />
+    <toRun type="Application" name="NasdaqServer" />
+    <toRun type="Application" name="NyseServer" />
+    <method />
+  </configuration>
+</component>
