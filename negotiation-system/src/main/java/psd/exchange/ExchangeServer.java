@@ -16,6 +16,7 @@ import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
@@ -52,7 +53,6 @@ public class ExchangeServer {
             final Exchange exchange = createExchange(args);
 
             scheduleTasks(exchange); // schedule open, close and day transition tasks
-//          exchange.open();
 
             pubSocket.connect("tcp://localhost:" + Integer.parseInt(args[1]));
             logger.info("Pub socket connected to " + Integer.parseInt(args[1]));
@@ -86,7 +86,7 @@ public class ExchangeServer {
     private static void scheduleTasks(Exchange exchange) {
         OpenExchangeTask openExchangeTask = new OpenExchangeTask(exchange);
         CloseExchangeTask closeExchangeTask = new CloseExchangeTask(exchange);
-        DayTransitionTask dayTransitionTask = new DayTransitionTask(exchange.getName());
+        DayTransitionTask dayTransitionTask = new DayTransitionTask(exchange.getCompanies());
         
         LocalDateTime now = LocalDateTime.now();
 // Uncomment the next 2 lines for using the real opening and closing times
@@ -406,15 +406,19 @@ public class ExchangeServer {
     private static class DayTransitionTask implements Runnable {
         private static final Logger logger = Logger.getLogger(DayTransitionTask.class.getName());
 
-        private final String exchangeName;
+        private final Set<String> companies;
 
-        DayTransitionTask(String exchangeName) { this.exchangeName = exchangeName; }
+        DayTransitionTask(Set<String> companies) { this.companies = companies; }
 
         @Override
         public void run() {
-            Data currentData = directoryClient.getCurrentDayPrices(exchangeName);
-            directoryClient.setPreviousDayPrices(exchangeName, currentData);
-            directoryClient.deleteCurrentDayPrices(exchangeName);
+            logger.info("Switching current day prices to previous day");
+
+            for (String c : companies) {
+                Data currentData = directoryClient.getCurrentDayPrices(c);
+                directoryClient.setPreviousDayPrices(c, currentData);
+                directoryClient.deleteCurrentDayPrices(c);
+            }
         }
     }
 }

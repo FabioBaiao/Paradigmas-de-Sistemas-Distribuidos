@@ -49,6 +49,15 @@ public class Exchange {
     /** Returns the name of this exchange. */
     public String getName() { return name; }
 
+    public Set<String> getCompanies() {
+        Set<String> companies = new HashSet<>((int) (orderMap.size() / .75f) + 1);
+
+        for (CompanyOrders o : orderMap.values())
+            companies.add(o.company);
+
+        return companies;
+    }
+
     // Should return immediately to avoid blocking the processing of more company orders
     public void setUpdateHandler(Consumer<Update> updateHandler) {
         this.updateHandler = updateHandler;
