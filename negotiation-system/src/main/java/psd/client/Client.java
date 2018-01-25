@@ -242,7 +242,7 @@ public class Client {
                 case "current":
                     price = client.getCurrentDayOpenPrice(company);
                     if (price == null) {
-                        System.out.println("Error");
+                        System.out.println("N/A");
                         return;
                     }
                     System.out.println("Opening price of current day in company " + company + ": " + price);
@@ -250,7 +250,7 @@ public class Client {
                 case "previous":
                     price = client.getPreviousDayOpenPrice(company);
                     if (price == null) {
-                        System.out.println("Error");
+                        System.out.println("N/A");
                         return;
                     }
                     System.out.println("Opening price of previous day in company " + company + ": " + price);
@@ -264,7 +264,7 @@ public class Client {
                 case "current":
                     price = client.getCurrentDayClosePrice(company);
                     if (price == null) {
-                        System.out.println("Error");
+                        System.out.println("N/A");
                         return;
                     }
                     System.out.println("Closing price of current day in company " + company + ": " + price);
@@ -272,7 +272,7 @@ public class Client {
                 case "previous":
                     price = client.getPreviousDayClosePrice(company);
                     if (price == null) {
-                        System.out.println("Error");
+                        System.out.println("N/A");
                         return;
                     }
                     System.out.println("Closing price of previous day in company " + company + ": " + price);
@@ -286,7 +286,7 @@ public class Client {
                 case "current":
                     price = client.getCurrentDayMinPrice(company);
                     if (price == null) {
-                        System.out.println("Error");
+                        System.out.println("N/A");
                         return;
                     }
                     System.out.println("Minimum price of current day in company " + company + ": " + price);
@@ -294,7 +294,7 @@ public class Client {
                 case "previous":
                     price = client.getPreviousDayMinPrice(company);
                     if (price == null) {
-                        System.out.println("Error");
+                        System.out.println("N/A");
                         return;
                     }
                     System.out.println("Minimum price of previous day in company " + company + ": " + price);
@@ -308,7 +308,7 @@ public class Client {
                 case "current":
                     price = client.getCurrentDayMaxPrice(company);
                     if (price == null) {
-                        System.out.println("Error");
+                        System.out.println("N/A");
                         return;
                     }
                     System.out.println("Maximum price of current day in company " + company + ": " + price);
@@ -316,7 +316,7 @@ public class Client {
                 case "previous":
                     price = client.getPreviousDayMaxPrice(company);
                     if (price == null) {
-                        System.out.println("Error");
+                        System.out.println("N/A");
                         return;
                     }
                     System.out.println("Maximum price of previous day in company " + company + ": " + price);
@@ -362,28 +362,30 @@ public class Client {
                     byte[] packet = in.readRawBytes(len);
                     Reply rep = Reply.parseFrom(packet);
 
-                    System.out.print("\r");
-                    switch (rep.getMsgCase()) {
-                        case AUTH:
-                            authentication(rep.getAuth());
-                            break;
-                        case INVREQ:
-                            invalidRequest(rep.getInvReq());
-                            break;
-                        case LOGOUT:
-                            logout(rep.getLogout());
-                            break;
-                        case ORDER:
-                            order(rep.getOrder());
-                            break;
-                        case TRADESREP:
-                            trades(rep.getTradesRep().getTradesList());
-                            break;
-                        case ERROR:
-                            System.out.println(rep.getError());
-                            break;
+                    synchronized (System.out) {
+                        System.out.print("\r");
+                        switch (rep.getMsgCase()) {
+                            case AUTH:
+                                authentication(rep.getAuth());
+                                break;
+                            case INVREQ:
+                                invalidRequest(rep.getInvReq());
+                                break;
+                            case LOGOUT:
+                                logout(rep.getLogout());
+                                break;
+                            case ORDER:
+                                order(rep.getOrder());
+                                break;
+                            case TRADESREP:
+                                trades(rep.getTradesRep().getTradesList());
+                                break;
+                            case ERROR:
+                                System.out.println(rep.getError());
+                                break;
+                        }
+                        System.out.print("> ");
                     }
-                    System.out.print("> ");
                 } catch (IOException e) {
                     e.printStackTrace();
                 }
@@ -471,9 +473,11 @@ public class Client {
         public void run() {
             while (true) {
                 byte[] b = socket.recv();
-                System.out.print("\r");
-                System.out.println(new String(b));
-                System.out.print("> ");
+                synchronized (System.out) {
+                    System.out.print("\r");
+                    System.out.println(new String(b));
+                    System.out.print("> ");
+                }
             }
         }
 

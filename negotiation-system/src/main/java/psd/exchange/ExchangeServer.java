@@ -123,7 +123,7 @@ public class ExchangeServer {
 
         logger.info("Scheduled first open for " + fstScheduledOpen);
         logger.info("Scheduled first close for " + fstScheduledClose);
-        logger.info("Scheduled first day transition to " + dayTransitionDelay);
+        logger.info("Scheduled first day transition to " + fstScheduledClose.plusMinutes(5));
     }
 
     private static Request readRequest(CodedInputStream cis) throws IOException {
