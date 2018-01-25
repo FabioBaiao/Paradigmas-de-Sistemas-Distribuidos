@@ -49,13 +49,11 @@ public class ExchangeServer {
              ZMQ.Context context = ZMQ.context(1);
              ZMQ.Socket pubSocket = context.socket(ZMQ.PUB)
         ) {
-            logger.info("Server socket bound to " + Integer.parseInt(args[0]));
             final Exchange exchange = createExchange(args);
 
             scheduleTasks(exchange); // schedule open, close and day transition tasks
 
             pubSocket.connect("tcp://localhost:" + Integer.parseInt(args[1]));
-            logger.info("Pub socket connected to " + Integer.parseInt(args[1]));
             frontendConn = serverSocket.accept();
             CodedInputStream cis = CodedInputStream.newInstance(frontendConn.getInputStream());
             CodedOutputStream cos = CodedOutputStream.newInstance(frontendConn.getOutputStream());

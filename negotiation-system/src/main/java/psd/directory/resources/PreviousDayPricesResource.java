@@ -46,7 +46,8 @@ public class PreviousDayPricesResource {
         Company c = directory.get(company);
         if (c != null) {
             Data d = c.getPreviousDay();
-            if (d != null) return d.getOpeningPrice();
+            if (d != null && d.getOpeningPrice() >= 0)
+                return d.getOpeningPrice();
         }
         throw new WebApplicationException(Response.Status.NOT_FOUND);
     }
@@ -57,7 +58,8 @@ public class PreviousDayPricesResource {
         Company c = directory.get(company);
         if (c != null) {
             Data d = c.getPreviousDay();
-            if (d != null) return d.getMinPrice();
+            if (d != null && d.getMinPrice() >= 0)
+                return d.getMinPrice();
         }
         throw new WebApplicationException(Response.Status.NOT_FOUND);
     }
@@ -68,7 +70,8 @@ public class PreviousDayPricesResource {
         Company c = directory.get(company);
         if (c != null) {
             Data d = c.getPreviousDay();
-            if (d != null) return d.getMaxPrice();
+            if (d != null && d.getMaxPrice() >= 0)
+                return d.getMaxPrice();
         }
         throw new WebApplicationException(Response.Status.NOT_FOUND);
     }
@@ -79,7 +82,8 @@ public class PreviousDayPricesResource {
         Company c = directory.get(company);
         if (c != null) {
             Data d = c.getPreviousDay();
-            if (d != null) return d.getClosingPrice();
+            if (d != null && d.getClosingPrice() >= 0)
+                return d.getClosingPrice();
         }
         throw new WebApplicationException(Response.Status.NOT_FOUND);
     }
